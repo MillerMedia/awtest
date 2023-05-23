@@ -65,12 +65,13 @@ func main() {
 	}
 
 	for _, service := range AWSListCalls {
-		if *debug {
-			fmt.Println("Attempting service call:", service.Name)
-		}
 		output, err := service.Call(sess)
-		if err == nil {
-			service.Process(output, *debug)
+		if err := service.Process(output, err, *debug); err != nil {
+			// Check if the error is InvalidKeyError and exit if so
+			if _, ok := err.(*InvalidKeyError); ok {
+				os.Exit(1)
+			}
+			// Otherwise, just continue to the next service
 		}
 	}
 }
