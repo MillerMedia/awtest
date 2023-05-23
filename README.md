@@ -25,7 +25,14 @@ go install -v github.com/MillerMedia/awtest/cmd/awtest@latest
 
 ## Usage
 
-#### Example command
+#### Example command 
+If you are using the AWS CLI, you can run the command without flags to analyze the current active CLI profile.
+```bash
+awtest
+```
+
+#### Example command w/explicit keys
+Use this to enter keys directly into the command.
 ```bash
 awtest --aki=YourAccessKeyID --sak=YourSecretAccessKey
 ```
