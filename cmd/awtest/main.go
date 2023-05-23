@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/MillerMedia/AWTest/cmd/awtest/services"
+	"github.com/MillerMedia/AWTest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -64,11 +66,11 @@ func main() {
 		fmt.Println("Region:", *awsRegion)
 	}
 
-	for _, service := range AWSListCalls {
+	for _, service := range services.AllServices() {
 		output, err := service.Call(sess)
 		if err := service.Process(output, err, *debug); err != nil {
 			// Check if the error is InvalidKeyError and exit if so
-			if _, ok := err.(*InvalidKeyError); ok {
+			if _, ok := err.(*types.InvalidKeyError); ok {
 				os.Exit(1)
 			}
 			// Otherwise, just continue to the next service

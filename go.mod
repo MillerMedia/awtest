@@ -1,4 +1,4 @@
-module AWTest
+module github.com/MillerMedia/AWTest
 
 go 1.19
 

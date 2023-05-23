@@ -1,7 +1,8 @@
-package main
+package utils
 
 import (
 	"fmt"
+	"github.com/MillerMedia/AWTest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/logrusorgru/aurora"
 )
@@ -33,11 +34,11 @@ func colorizeMessage(moduleName string, method string, severity string, result s
 	return coloredMessage
 }
 
-func printResult(debug bool, moduleName string, method string, result string, err error) {
+func PrintResult(debug bool, moduleName string, method string, result string, err error) {
 	severity := determineSeverity(err)
 
 	if moduleName == "" {
-		moduleName = DefaultModuleName
+		moduleName = types.DefaultModuleName
 	}
 
 	message := colorizeMessage(moduleName, method, severity, result)
@@ -45,21 +46,21 @@ func printResult(debug bool, moduleName string, method string, result string, er
 	fmt.Println(message)
 }
 
-func handleAWSError(debug bool, callName string, err error) error {
+func HandleAWSError(debug bool, callName string, err error) error {
 	if awsErr, ok := err.(awserr.Error); ok {
-		prettyMsg, exists := awsErrorMessages[awsErr.Code()]
+		prettyMsg, exists := types.AwsErrorMessages[awsErr.Code()]
 		if !exists {
 			prettyMsg = awsErr.Message()
 		}
 
-		if awsErr.Code() == InvalidAccessKeyId {
-			printResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
-			return &InvalidKeyError{prettyMsg}
+		if awsErr.Code() == types.InvalidAccessKeyId || awsErr.Code() == types.InvalidClientTokenId {
+			PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
+			return &types.InvalidKeyError{prettyMsg}
 		} else {
-			printResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
+			PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
 		}
 	} else {
-		printResult(debug, "", callName, fmt.Sprintf("Error: %s", err.Error()), err)
+		PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", err.Error()), err)
 	}
 	return nil
 }
