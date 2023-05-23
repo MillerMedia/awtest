@@ -2,8 +2,8 @@ package iam
 
 import (
 	"fmt"
-	"github.com/MillerMedia/AWTest/cmd/awtest/types"
-	"github.com/MillerMedia/AWTest/cmd/awtest/utils"
+	"github.com/MillerMedia/awtest/cmd/awtest/types"
+	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 )

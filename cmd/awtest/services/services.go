@@ -1,19 +1,19 @@
 package services
 
 import (
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/apigateway"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/appsync"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/cloudwatch"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/ec2"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/iam"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/lambda"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/rds"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/s3"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/secretsmanager"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/sns"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/sqs"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services/sts"
-	"github.com/MillerMedia/AWTest/cmd/awtest/types"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/apigateway"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/appsync"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudwatch"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/iam"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/lambda"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/rds"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/s3"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/secretsmanager"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/sns"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/sqs"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/sts"
+	"github.com/MillerMedia/awtest/cmd/awtest/types"
 )
 
 func AllServices() []types.AWSService {

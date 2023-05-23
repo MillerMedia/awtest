@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"github.com/MillerMedia/AWTest/cmd/awtest/types"
+	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/logrusorgru/aurora"
 )

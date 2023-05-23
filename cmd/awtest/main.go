@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/MillerMedia/AWTest/cmd/awtest/services"
-	"github.com/MillerMedia/AWTest/cmd/awtest/types"
+	"github.com/MillerMedia/awtest/cmd/awtest/services"
+	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
