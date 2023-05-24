@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
+	"strings"
 )
 
 var SNSCalls = []types.AWSService{
@@ -31,7 +32,44 @@ var SNSCalls = []types.AWSService{
 			}
 			if topics, ok := output.([]*sns.Topic); ok {
 				for _, topic := range topics {
-					utils.PrintResult(debug, "", "sns:ListTopics", fmt.Sprintf("Found SNS topic: %s", *topic.TopicArn), nil)
+					colorizedTopic := utils.ColorizeItem(*topic.TopicArn)
+					utils.PrintResult(debug, "", "sns:ListTopics", fmt.Sprintf("SNS Topic: %s", colorizedTopic), nil)
+
+					arnParts := strings.Split(*topic.TopicArn, ":")
+					if len(arnParts) < 4 {
+						return fmt.Errorf("invalid ARN: %s", *topic.TopicArn)
+					}
+					region := arnParts[3]
+					sessWithRegion := session.Must(session.NewSession(&aws.Config{Region: aws.String(region)}))
+					svc := sns.New(sessWithRegion)
+
+					// get topic attributes
+					attrOutput, attrErr := svc.GetTopicAttributes(&sns.GetTopicAttributesInput{
+						TopicArn: topic.TopicArn,
+					})
+					if attrErr != nil {
+						return utils.HandleAWSError(debug, "sns:GetTopicAttributes", attrErr)
+					}
+					for name, value := range attrOutput.Attributes {
+						// Only display DisplayName and number of subscriptions
+						if (name == "DisplayName" || name == "SubscriptionsConfirmed" || name == "SubscriptionsPending" || name == "SubscriptionsDeleted") && *value != "" {
+							utils.PrintResult(debug, "", "sns:GetTopicAttributes", fmt.Sprintf("SNS Topic: %s | %s = %s", colorizedTopic, name, *value), nil)
+						}
+					}
+
+					// get subscriptions
+					//subOutput, subErr := svc.ListSubscriptionsByTopic(&sns.ListSubscriptionsByTopicInput{
+					//	TopicArn: topic.TopicArn,
+					//})
+					//if subErr != nil {
+					//	return utils.HandleAWSError(debug, "sns:ListSubscriptionsByTopic", subErr)
+					//}
+					//for _, subscription := range subOutput.Subscriptions {
+					//	utils.PrintResult(debug, "", "sns:ListSubscriptionsByTopic", fmt.Sprintf("SNS Topic: %s | Subscription: %s = %s", colorizedTopic, *subscription.Endpoint, *subscription.Protocol), nil)
+					//}
+
+					// print blank line
+					fmt.Println()
 				}
 			}
 			return nil

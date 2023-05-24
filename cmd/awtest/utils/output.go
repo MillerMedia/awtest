@@ -7,6 +7,11 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
+const (
+	ResetColor   = "\033[0m"
+	DisplayColor = "\033[33m"
+)
+
 // Determines the severity based on the error received. For simplicity, we'll classify service
 // call errors as high severity, and successful calls as info severity.
 func determineSeverity(err error) string {
@@ -63,4 +68,8 @@ func HandleAWSError(debug bool, callName string, err error) error {
 		PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", err.Error()), err)
 	}
 	return nil
+}
+
+func ColorizeItem(input string) string {
+	return DisplayColor + input + ResetColor
 }
