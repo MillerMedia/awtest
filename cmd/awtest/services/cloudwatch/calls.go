@@ -31,7 +31,7 @@ var CloudwatchCalls = []types.AWSService{
 			}
 			if alarms, ok := output.([]*cloudwatch.MetricAlarm); ok {
 				for _, alarm := range alarms {
-					utils.PrintResult(debug, "", "cloudwatch:DescribeAlarms", fmt.Sprintf("Found CloudWatch alarm: %s", *alarm.AlarmName), nil)
+					utils.PrintResult(debug, "", "cloudwatch:DescribeAlarms", fmt.Sprintf("CloudWatch alarm: %s", utils.ColorizeItem(*alarm.AlarmName)), nil)
 				}
 			}
 			return nil

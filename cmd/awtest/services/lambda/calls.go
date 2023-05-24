@@ -31,7 +31,7 @@ var LambdaCalls = []types.AWSService{
 			}
 			if functions, ok := output.([]*lambda.FunctionConfiguration); ok {
 				for _, function := range functions {
-					utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Found Lambda function: %s", *function.FunctionName), nil)
+					utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Lambda function: %s", utils.ColorizeItem(*function.FunctionName)), nil)
 				}
 			}
 			return nil
