@@ -10,11 +10,14 @@ import (
 )
 
 type ApiWithStages struct {
-	Api       *apigateway.RestApi
-	Stages    []*apigateway.Stage
-	Models    []*apigateway.Model
-	Resources []*apigateway.Resource // Add this line
-	Region    string
+	Api                 *apigateway.RestApi
+	Stages              []*apigateway.Stage
+	Models              []*apigateway.Model
+	Resources           []*apigateway.Resource // Add this line
+	Region              string
+	MethodParams        map[string]map[string]map[string]bool
+	MethodIntegrations  map[string]map[string]*apigateway.Integration
+	AuthorizationScopes map[string]map[string][]string
 }
 
 var APIGatewayCalls = []types.AWSService{
@@ -44,16 +47,62 @@ var APIGatewayCalls = []types.AWSService{
 					if err != nil {
 						return nil, err
 					}
-					resourcesOutput, err := svc.GetResources(&apigateway.GetResourcesInput{RestApiId: api.Id}) // Add this line
+					resourcesOutput, err := svc.GetResources(&apigateway.GetResourcesInput{RestApiId: api.Id})
 					if err != nil {
 						return nil, err
 					}
+
+					methodParams := make(map[string]map[string]map[string]bool)
+					methodIntegrations := make(map[string]map[string]*apigateway.Integration)
+					for _, resource := range resourcesOutput.Items {
+						if resource.ResourceMethods != nil {
+							resourceID := *resource.Id
+							methodParams[resourceID] = make(map[string]map[string]bool)
+							methodIntegrations[resourceID] = make(map[string]*apigateway.Integration)
+
+							for method, _ := range resource.ResourceMethods {
+								input := &apigateway.GetMethodInput{
+									ResourceId: aws.String(resourceID),
+									RestApiId:  api.Id,
+									HttpMethod: aws.String(method),
+								}
+
+								methodOutput, err := svc.GetMethod(input)
+								if err != nil {
+									return nil, err
+								}
+
+								params := make(map[string]bool)
+								for paramName, paramInfo := range methodOutput.RequestParameters {
+									params[paramName] = aws.BoolValue(paramInfo)
+								}
+
+								methodParams[resourceID][method] = params
+
+								// Get Integration
+								integrationInput := &apigateway.GetIntegrationInput{
+									ResourceId: aws.String(resourceID),
+									RestApiId:  api.Id,
+									HttpMethod: aws.String(method),
+								}
+								integrationOutput, err := svc.GetIntegration(integrationInput)
+								if err != nil {
+									// handle the error or just continue if integration is not a necessity
+									continue
+								}
+
+								methodIntegrations[resourceID][method] = integrationOutput
+							}
+						}
+					}
+
 					apiWithStages := ApiWithStages{
-						Api:       api,
-						Stages:    stagesOutput.Item,
-						Models:    modelsOutput.Items,
-						Resources: resourcesOutput.Items, // Add this line
-						Region:    region,
+						Api:          api,
+						Stages:       stagesOutput.Item,
+						Models:       modelsOutput.Items,
+						Resources:    resourcesOutput.Items, // Add this line
+						Region:       region,
+						MethodParams: methodParams,
 					}
 					allApisWithStages = append(allApisWithStages, apiWithStages)
 				}
@@ -78,17 +127,27 @@ var APIGatewayCalls = []types.AWSService{
 							resourceID := *resource.Id
 							resourcePath := *resource.Path
 
-							utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource ID: %s", resourceID), nil)
+							//utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource ID: %s", resourceID), nil)
 							utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource Path: %s", resourcePath), nil)
 
 							// Check if the ResourceMethods map is not nil
-							if resource.ResourceMethods != nil {
-								for method, _ := range resource.ResourceMethods {
-									utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource Method: %s", method), nil)
+							for method, params := range apiWithStages.MethodParams[resourceID] {
+								utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource Method: %s", method), nil)
+
+								for paramName, required := range params {
+									utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Request Parameter: %s, Required: %v", paramName, required), nil)
 								}
 							}
 						}
 					}
+
+					//if len(apiWithStages.MethodIntegrations) > 0 {
+					//	for resourceID, methods := range apiWithStages.MethodIntegrations {
+					//		for method, integration := range methods {
+					//			utils.PrintResult(debug, "", "apigateway:GetMethodIntegration", fmt.Sprintf("Integration Type for Method %s of Resource %s: %s", method, resourceID, *integration.Type), nil)
+					//		}
+					//	}
+					//}
 
 					if len(apiWithStages.Stages) == 0 {
 						utils.PrintResult(debug, "", "apigateway:GetStages", fmt.Sprintf("No stages found for API: %s, but access is granted.", apiName), nil)
