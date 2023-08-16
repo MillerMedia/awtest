@@ -10,9 +10,11 @@ import (
 )
 
 type ApiWithStages struct {
-	Api    *apigateway.RestApi
-	Stages []*apigateway.Stage
-	Models []*apigateway.Model
+	Api       *apigateway.RestApi
+	Stages    []*apigateway.Stage
+	Models    []*apigateway.Model
+	Resources []*apigateway.Resource // Add this line
+	Region    string
 }
 
 var APIGatewayCalls = []types.AWSService{
@@ -42,7 +44,18 @@ var APIGatewayCalls = []types.AWSService{
 					if err != nil {
 						return nil, err
 					}
-					allApisWithStages = append(allApisWithStages, ApiWithStages{Api: api, Stages: stagesOutput.Item, Models: modelsOutput.Items})
+					resourcesOutput, err := svc.GetResources(&apigateway.GetResourcesInput{RestApiId: api.Id}) // Add this line
+					if err != nil {
+						return nil, err
+					}
+					apiWithStages := ApiWithStages{
+						Api:       api,
+						Stages:    stagesOutput.Item,
+						Models:    modelsOutput.Items,
+						Resources: resourcesOutput.Items, // Add this line
+						Region:    region,
+					}
+					allApisWithStages = append(allApisWithStages, apiWithStages)
 				}
 			}
 			return allApisWithStages, nil
@@ -54,6 +67,29 @@ var APIGatewayCalls = []types.AWSService{
 			if apisWithStages, ok := output.([]ApiWithStages); ok {
 				for _, apiWithStages := range apisWithStages {
 					apiName := *apiWithStages.Api.Name
+					restApiId := *apiWithStages.Api.Id
+					region := apiWithStages.Region
+					apiUrl := fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com", restApiId, region)
+					utils.PrintResult(debug, "", "apigateway:RestApis", fmt.Sprintf("Found API Gateway: %s, Base URL: %s", apiName, apiUrl), nil)
+
+					// Add this loop to print resources
+					if len(apiWithStages.Resources) > 0 {
+						for _, resource := range apiWithStages.Resources {
+							resourceID := *resource.Id
+							resourcePath := *resource.Path
+
+							utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource ID: %s", resourceID), nil)
+							utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource Path: %s", resourcePath), nil)
+
+							// Check if the ResourceMethods map is not nil
+							if resource.ResourceMethods != nil {
+								for method, _ := range resource.ResourceMethods {
+									utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource Method: %s", method), nil)
+								}
+							}
+						}
+					}
+
 					if len(apiWithStages.Stages) == 0 {
 						utils.PrintResult(debug, "", "apigateway:GetStages", fmt.Sprintf("No stages found for API: %s, but access is granted.", apiName), nil)
 					} else {
@@ -134,8 +170,12 @@ var APIGatewayCalls = []types.AWSService{
 				return utils.HandleAWSError(debug, "apigateway:GetDomainNames", err)
 			}
 			if domainNames, ok := output.([]*apigateway.DomainName); ok {
-				for _, domainName := range domainNames {
-					utils.PrintResult(debug, "", "apigateway:GetDomainNames", fmt.Sprintf("Found Domain Name: %s", *domainName.DomainName), nil)
+				if len(domainNames) == 0 {
+					utils.PrintResult(debug, "", "apigateway:GetDomainNames", "No domain names found, but access is granted.", nil)
+				} else {
+					for _, domainName := range domainNames {
+						utils.PrintResult(debug, "", "apigateway:GetDomainNames", fmt.Sprintf("Found Domain Name: %s", *domainName.DomainName), nil)
+					}
 				}
 			}
 			return nil
