@@ -80,18 +80,18 @@ var APIGatewayCalls = []types.AWSService{
 								methodParams[resourceID][method] = params
 
 								// Get Integration
-								integrationInput := &apigateway.GetIntegrationInput{
-									ResourceId: aws.String(resourceID),
-									RestApiId:  api.Id,
-									HttpMethod: aws.String(method),
-								}
-								integrationOutput, err := svc.GetIntegration(integrationInput)
-								if err != nil {
-									// handle the error or just continue if integration is not a necessity
-									continue
-								}
-
-								methodIntegrations[resourceID][method] = integrationOutput
+								//integrationInput := &apigateway.GetIntegrationInput{
+								//	ResourceId: aws.String(resourceID),
+								//	RestApiId:  api.Id,
+								//	HttpMethod: aws.String(method),
+								//}
+								//integrationOutput, err := svc.GetIntegration(integrationInput)
+								//if err != nil {
+								//	// handle the error or just continue if integration is not a necessity
+								//	continue
+								//}
+								//
+								//methodIntegrations[resourceID][method] = integrationOutput
 							}
 						}
 					}
