@@ -43,4 +43,41 @@ var APIGatewayCalls = []types.AWSService{
 		},
 		ModuleName: types.DefaultModuleName,
 	},
+	{
+		Name: "apigateway:GetApiKeys",
+		Call: func(sess *session.Session) (interface{}, error) {
+			var allApiKeys []*apigateway.ApiKey
+			for _, region := range types.Regions {
+				regionSess, err := session.NewSession(&aws.Config{
+					Region: aws.String(region),
+				})
+				if err != nil {
+					return nil, err
+				}
+				svc := apigateway.New(regionSess)
+				output, err := svc.GetApiKeys(&apigateway.GetApiKeysInput{})
+				if err != nil {
+					return nil, err
+				}
+				allApiKeys = append(allApiKeys, output.Items...)
+			}
+			return allApiKeys, nil
+		},
+		Process: func(output interface{}, err error, debug bool) error {
+			if err != nil {
+				return utils.HandleAWSError(debug, "apigateway:GetApiKeys", err)
+			}
+			if apiKeys, ok := output.([]*apigateway.ApiKey); ok {
+				if len(apiKeys) == 0 {
+					utils.PrintResult(debug, "", "apigateway:GetApiKeys", "No API keys found, but access is granted.", nil)
+				} else {
+					for _, apiKey := range apiKeys {
+						utils.PrintResult(debug, "", "apigateway:GetApiKeys", fmt.Sprintf("Found API Key: %s", *apiKey.Id), nil)
+					}
+				}
+			}
+			return nil
+		},
+		ModuleName: types.DefaultModuleName,
+	},
 }
