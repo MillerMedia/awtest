@@ -10,6 +10,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/glacier"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/iam"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/iot"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/kms"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/lambda"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/rds"
@@ -29,6 +30,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, s3.S3Calls...)
 	allServices = append(allServices, ec2.EC2Calls...)
 	allServices = append(allServices, iam.IAMCalls...)
+	allServices = append(allServices, iot.IoTCalls...)
 	allServices = append(allServices, rds.RDSCalls...)
 	allServices = append(allServices, ses.SESCalls...)
 	allServices = append(allServices, sns.SNSCalls...)
