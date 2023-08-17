@@ -59,6 +59,14 @@ func PrintResult(debug bool, moduleName string, method string, result string, er
 	fmt.Println(message)
 }
 
+func PrintAccessGranted(debug bool, serviceName, resource string, additionalInfo ...interface{}) {
+	message := fmt.Sprintf("Access granted. No %s found.", resource)
+	if additionalInfo != nil {
+		message += " " + fmt.Sprintf(additionalInfo[0].(string), additionalInfo[1:]...)
+	}
+	PrintResult(debug, "", serviceName, message, nil)
+}
+
 func HandleAWSError(debug bool, callName string, err error) error {
 	if awsErr, ok := err.(awserr.Error); ok {
 		prettyMsg, exists := types.AwsErrorMessages[awsErr.Code()]

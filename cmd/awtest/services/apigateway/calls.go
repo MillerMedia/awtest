@@ -202,7 +202,7 @@ var APIGatewayCalls = []types.AWSService{
 			}
 			if apiKeys, ok := output.([]*apigateway.ApiKey); ok {
 				if len(apiKeys) == 0 {
-					utils.PrintResult(debug, "", "apigateway:GetApiKeys", "No API keys found, but access is granted.", nil)
+					utils.PrintAccessGranted(debug, "apigateway:GetApiKeys", "API keys")
 				} else {
 					for _, apiKey := range apiKeys {
 						utils.PrintResult(debug, "", "apigateway:GetApiKeys", fmt.Sprintf("Found API Key: %s", *apiKey.Id), nil)
@@ -242,7 +242,7 @@ var APIGatewayCalls = []types.AWSService{
 			}
 			if domainNames, ok := output.([]*apigateway.DomainName); ok {
 				if len(domainNames) == 0 {
-					utils.PrintResult(debug, "", "apigateway:GetDomainNames", "No domain names found, but access is granted.", nil)
+					utils.PrintAccessGranted(debug, "apigateway:GetDomainNames", "domain names")
 				} else {
 					for _, domainName := range domainNames {
 						utils.PrintResult(debug, "", "apigateway:GetDomainNames", fmt.Sprintf("Found Domain Name: %s", *domainName.DomainName), nil)
