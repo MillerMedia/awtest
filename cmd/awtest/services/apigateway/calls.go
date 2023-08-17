@@ -26,10 +26,13 @@ var APIGatewayCalls = []types.AWSService{
 		Call: func(sess *session.Session) (interface{}, error) {
 			var allApisWithStages []ApiWithStages
 
+			originalConfig := sess.Config
 			for _, region := range types.Regions {
-				regionSess, err := session.NewSession(&aws.Config{
-					Region: aws.String(region),
-				})
+				regionConfig := &aws.Config{
+					Region:      aws.String(region),
+					Credentials: originalConfig.Credentials,
+				}
+				regionSess, err := session.NewSession(regionConfig)
 				if err != nil {
 					return nil, err
 				}
@@ -80,18 +83,19 @@ var APIGatewayCalls = []types.AWSService{
 								methodParams[resourceID][method] = params
 
 								// Get Integration
-								//integrationInput := &apigateway.GetIntegrationInput{
-								//	ResourceId: aws.String(resourceID),
-								//	RestApiId:  api.Id,
-								//	HttpMethod: aws.String(method),
-								//}
-								//integrationOutput, err := svc.GetIntegration(integrationInput)
-								//if err != nil {
-								//	// handle the error or just continue if integration is not a necessity
-								//	continue
-								//}
-								//
-								//methodIntegrations[resourceID][method] = integrationOutput
+								integrationInput := &apigateway.GetIntegrationInput{
+									ResourceId: aws.String(resourceID),
+									RestApiId:  api.Id,
+									HttpMethod: aws.String(method),
+								}
+								integrationOutput, err := svc.GetIntegration(integrationInput)
+
+								if err != nil {
+									// handle the error or just continue if integration is not a necessity
+									continue
+								}
+
+								methodIntegrations[resourceID][method] = integrationOutput
 							}
 						}
 					}
@@ -143,13 +147,13 @@ var APIGatewayCalls = []types.AWSService{
 						}
 					}
 
-					//if len(apiWithStages.MethodIntegrations) > 0 {
-					//	for resourceID, methods := range apiWithStages.MethodIntegrations {
-					//		for method, integration := range methods {
-					//			utils.PrintResult(debug, "", "apigateway:GetMethodIntegration", fmt.Sprintf("Integration Type for Method %s of Resource %s: %s", method, resourceID, *integration.Type), nil)
-					//		}
-					//	}
-					//}
+					if len(apiWithStages.MethodIntegrations) > 0 {
+						for resourceID, methods := range apiWithStages.MethodIntegrations {
+							for method, integration := range methods {
+								utils.PrintResult(debug, "", "apigateway:GetMethodIntegration", fmt.Sprintf("Integration Type for Method %s of Resource %s: %s", method, resourceID, *integration.Type), nil)
+							}
+						}
+					}
 
 					if len(apiWithStages.Stages) == 0 {
 						utils.PrintResult(debug, "", "apigateway:GetStages", fmt.Sprintf("No stages found for API: %s, but access is granted.", apiName), nil)
@@ -173,10 +177,13 @@ var APIGatewayCalls = []types.AWSService{
 		Name: "apigateway:GetApiKeys",
 		Call: func(sess *session.Session) (interface{}, error) {
 			var allApiKeys []*apigateway.ApiKey
+			originalConfig := sess.Config
 			for _, region := range types.Regions {
-				regionSess, err := session.NewSession(&aws.Config{
-					Region: aws.String(region),
-				})
+				regionConfig := &aws.Config{
+					Region:      aws.String(region),
+					Credentials: originalConfig.Credentials,
+				}
+				regionSess, err := session.NewSession(regionConfig)
 				if err != nil {
 					return nil, err
 				}
@@ -210,10 +217,13 @@ var APIGatewayCalls = []types.AWSService{
 		Name: "apigateway:GetDomainNames",
 		Call: func(sess *session.Session) (interface{}, error) {
 			var allDomainNames []*apigateway.DomainName
+			originalConfig := sess.Config
 			for _, region := range types.Regions {
-				regionSess, err := session.NewSession(&aws.Config{
-					Region: aws.String(region),
-				})
+				regionConfig := &aws.Config{
+					Region:      aws.String(region),
+					Credentials: originalConfig.Credentials,
+				}
+				regionSess, err := session.NewSession(regionConfig)
 				if err != nil {
 					return nil, err
 				}

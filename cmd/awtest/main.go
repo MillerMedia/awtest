@@ -45,7 +45,9 @@ func main() {
 	if *awsAccessKeyID == "" || *awsSecretAccessKey == "" {
 		sess, err = session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
-			Config:            aws.Config{Region: aws.String(*awsRegion)},
+			Config: aws.Config{
+				Region: aws.String(*awsRegion),
+			},
 		})
 		if err != nil {
 			fmt.Println("Failed to create session with shared config: ", err)

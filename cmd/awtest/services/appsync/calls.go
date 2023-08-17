@@ -14,10 +14,13 @@ var AppSyncCalls = []types.AWSService{
 		Name: "appsync:ListGraphqlApis",
 		Call: func(sess *session.Session) (interface{}, error) {
 			var allApis []*appsync.GraphqlApi
+			originalConfig := sess.Config
 			for _, region := range types.Regions {
-				regionSess, err := session.NewSession(&aws.Config{
-					Region: aws.String(region),
-				})
+				regionConfig := &aws.Config{
+					Region:      aws.String(region),
+					Credentials: originalConfig.Credentials,
+				}
+				regionSess, err := session.NewSession(regionConfig)
 				if err != nil {
 					return nil, err
 				}
