@@ -5,6 +5,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/logrusorgru/aurora"
+	"strings"
 )
 
 const (
@@ -33,6 +34,13 @@ func colorizeMessage(moduleName string, method string, severity string, result s
 		severityColored = aurora.Red(severity).String()
 	} else {
 		severityColored = aurora.Blue(severity).String()
+	}
+
+	// Splitting the result string at the colon and colorizing the part before it
+	parts := strings.SplitN(result, ": ", 2)
+	if len(parts) == 2 {
+		parts[0] = "\033[35m" + parts[0] + "\033[0m"
+		result = parts[0] + ": " + parts[1]
 	}
 
 	coloredMessage := fmt.Sprintf("[%s] [%s] [%s] %s", moduleNameColored, methodColored, severityColored, result)
