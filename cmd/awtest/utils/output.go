@@ -96,3 +96,10 @@ func HandleAWSError(debug bool, callName string, err error) error {
 func ColorizeItem(input string) string {
 	return DisplayColor + input + ResetColor
 }
+
+func MaskSecret(secret string) string {
+	if len(secret) < 6 {
+		return "******" // Return all asterisks if the secret is too short
+	}
+	return secret[:2] + "****" + secret[len(secret)-2:]
+}

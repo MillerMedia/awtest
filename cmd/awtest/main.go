@@ -5,13 +5,25 @@ import (
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/services"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
+	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"os"
 )
 
+const Version = "v0.1.0"
+
 func main() {
+	fmt.Println("     /\\ \\        / /__   __|      | |")
+	fmt.Println("    /  \\ \\  /\\  / /   | | ___  ___| |_")
+	fmt.Println("   / /\\ \\ \\/  \\/ /    | |/ _ \\/ __| __|")
+	fmt.Println("  / ____ \\  /\\  /     | |  __/\\__ \\ |_")
+	fmt.Println(" /_/    \\_\\/  \\/      |_|\\___||___/\\__|")
+	fmt.Println("----------------------------------------")
+	fmt.Println("Version:", Version)
+	fmt.Println("----------------------------------------")
+
 	awsAccessKeyID := flag.String("access-key-id", "", "AWS Access Key ID")
 	awsSecretAccessKey := flag.String("secret-access-key", "", "AWS Secret Access Key")
 	awsRegion := flag.String("region", "us-west-2", "AWS Region")
@@ -63,9 +75,12 @@ func main() {
 
 	if *debug {
 		fmt.Println("Debug mode enabled")
+		fmt.Println("-----------------------------")
 		fmt.Println("Using the following AWS configuration:")
 		fmt.Println("Access Key ID:", *awsAccessKeyID)
+		fmt.Println("Secret Access Key:", utils.MaskSecret(*awsSecretAccessKey))
 		fmt.Println("Region:", *awsRegion)
+		fmt.Println("-----------------------------")
 	}
 
 	for _, service := range services.AllServices() {
