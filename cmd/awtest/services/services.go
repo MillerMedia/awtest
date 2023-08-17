@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/MillerMedia/awtest/cmd/awtest/services/amplify"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/apigateway"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/appsync"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudwatch"
@@ -32,6 +33,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, lambda.LambdaCalls...)
 	allServices = append(allServices, cloudwatch.CloudwatchCalls...)
 	allServices = append(allServices, secretsmanager.SecretsManagerCalls...)
+	allServices = append(allServices, amplify.AmplifyCalls...)
 	allServices = append(allServices, appsync.AppSyncCalls...)
 	allServices = append(allServices, apigateway.APIGatewayCalls...)
 	allServices = append(allServices, dynamodb.DynamoDBCalls...)
