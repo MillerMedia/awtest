@@ -4,6 +4,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/amplify"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/apigateway"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/appsync"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudfront"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudwatch"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/dynamodb"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
@@ -31,6 +32,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, sns.SNSCalls...)
 	allServices = append(allServices, sqs.SQSCalls...)
 	allServices = append(allServices, lambda.LambdaCalls...)
+	allServices = append(allServices, cloudfront.CloudFrontCalls...)
 	allServices = append(allServices, cloudwatch.CloudwatchCalls...)
 	allServices = append(allServices, secretsmanager.SecretsManagerCalls...)
 	allServices = append(allServices, amplify.AmplifyCalls...)
