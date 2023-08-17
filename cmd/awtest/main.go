@@ -41,7 +41,7 @@ func main() {
 	if *awsSecretAccessKeyAbbr != "" {
 		awsSecretAccessKey = awsSecretAccessKeyAbbr
 	}
-	
+
 	if *awsAccessKeyID == "" {
 		*awsAccessKeyID = os.Getenv("AWS_ACCESS_KEY_ID")
 	}

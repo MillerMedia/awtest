@@ -15,6 +15,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/rds"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/s3"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/secretsmanager"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ses"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sns"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sqs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sts"
@@ -29,6 +30,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ec2.EC2Calls...)
 	allServices = append(allServices, iam.IAMCalls...)
 	allServices = append(allServices, rds.RDSCalls...)
+	allServices = append(allServices, ses.SESCalls...)
 	allServices = append(allServices, sns.SNSCalls...)
 	allServices = append(allServices, sqs.SQSCalls...)
 	allServices = append(allServices, lambda.LambdaCalls...)
