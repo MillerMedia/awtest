@@ -75,7 +75,6 @@ func main() {
 			if _, ok := err.(*types.InvalidKeyError); ok {
 				os.Exit(1)
 			}
-			// Otherwise, just continue to the next service
 		}
 	}
 }

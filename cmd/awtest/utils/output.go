@@ -66,12 +66,19 @@ func HandleAWSError(debug bool, callName string, err error) error {
 			prettyMsg = awsErr.Message()
 		}
 
-		if awsErr.Code() == types.InvalidAccessKeyId || awsErr.Code() == types.InvalidClientTokenId {
+		if awsErr.Code() == "UnauthorizedOperation" ||
+			awsErr.Code() == "AccessDenied" ||
+			awsErr.Code() == "AccessDeniedException" ||
+			awsErr.Code() == "AuthorizationError" {
+			if !debug {
+				prettyMsg = "Access denied to this service."
+			}
+		} else if awsErr.Code() == types.InvalidAccessKeyId || awsErr.Code() == types.InvalidClientTokenId {
 			PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
 			return &types.InvalidKeyError{prettyMsg}
-		} else {
-			PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
 		}
+
+		PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
 	} else {
 		PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", err.Error()), err)
 	}
