@@ -115,11 +115,13 @@ var APIGatewayCalls = []types.AWSService{
 			}
 			if apisWithStages, ok := output.([]ApiWithStages); ok {
 				for _, apiWithStages := range apisWithStages {
+					fmt.Println()
 					apiName := *apiWithStages.Api.Name
 					restApiId := *apiWithStages.Api.Id
 					region := apiWithStages.Region
 					apiUrl := fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com", restApiId, region)
-					utils.PrintResult(debug, "", "apigateway:RestApis", fmt.Sprintf("Found API Gateway: %s, Base URL: %s", apiName, apiUrl), nil)
+					utils.PrintResult(debug, "", "apigateway:RestApis", fmt.Sprintf("Found API Gateway: %s", apiName), nil)
+					utils.PrintResult(debug, "", "apigateway:RestApis", fmt.Sprintf("Base URL: %s", apiUrl), nil)
 
 					// Add this loop to print resources
 					if len(apiWithStages.Resources) > 0 {
