@@ -41,8 +41,7 @@ func main() {
 	if *awsSecretAccessKeyAbbr != "" {
 		awsSecretAccessKey = awsSecretAccessKeyAbbr
 	}
-
-	// If keys are not provided through flags, try to get them from the environment
+	
 	if *awsAccessKeyID == "" {
 		*awsAccessKeyID = os.Getenv("AWS_ACCESS_KEY_ID")
 	}
@@ -53,7 +52,6 @@ func main() {
 	var sess *session.Session
 	var err error
 
-	// If keys are not provided through flags or environment, fallback to shared config file
 	if *awsAccessKeyID == "" || *awsSecretAccessKey == "" {
 		sess, err = session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
