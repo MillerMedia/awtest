@@ -60,7 +60,6 @@ var DynamoDBCalls = []types.AWSService{
 			if exports, ok := output.([]*dynamodb.ExportSummary); ok {
 				if len(exports) == 0 {
 					utils.PrintAccessGranted(debug, "dynamodb:ListExports", "DynamoDB exports")
-					utils.PrintResult(debug, "", "dynamodb:ListExports", "No DynamoDB exports found", nil)
 				} else {
 					for _, export := range exports {
 						utils.PrintResult(debug, "", "dynamodb:ListExports", fmt.Sprintf("DynamoDB export: %s", utils.ColorizeItem(*export.ExportArn)), nil)
