@@ -9,29 +9,62 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 )
 
+type LambdaDetails struct {
+	Function *lambda.FunctionConfiguration
+	Region   string
+	Code     *lambda.GetFunctionOutput
+}
+
 var LambdaCalls = []types.AWSService{
 	{
 		Name: "lambda:ListFunctions",
 		Call: func(sess *session.Session) (interface{}, error) {
-			var allFunctions []*lambda.FunctionConfiguration
+			var allDetails []LambdaDetails
+
+			originalConfig := sess.Config
 			for _, region := range types.Regions {
-				sess.Config.Region = aws.String(region)
-				svc := lambda.New(sess)
+				regionConfig := &aws.Config{
+					Region:      aws.String(region),
+					Credentials: originalConfig.Credentials,
+				}
+				regionSess, err := session.NewSession(regionConfig)
+				if err != nil {
+					return nil, err
+				}
+				svc := lambda.New(regionSess)
 				output, err := svc.ListFunctions(&lambda.ListFunctionsInput{})
 				if err != nil {
 					return nil, err
 				}
-				allFunctions = append(allFunctions, output.Functions...)
+
+				for _, function := range output.Functions {
+					getFuncOutput, err := svc.GetFunction(&lambda.GetFunctionInput{
+						FunctionName: function.FunctionName,
+					})
+					if err != nil {
+						return nil, err
+					}
+
+					details := LambdaDetails{
+						Function: function,
+						Region:   region,
+						Code:     getFuncOutput,
+					}
+					allDetails = append(allDetails, details)
+				}
 			}
-			return allFunctions, nil
+			return allDetails, nil
 		},
 		Process: func(output interface{}, err error, debug bool) error {
 			if err != nil {
 				return utils.HandleAWSError(debug, "lambda:ListFunctions", err)
 			}
-			if functions, ok := output.([]*lambda.FunctionConfiguration); ok {
-				for _, function := range functions {
-					utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Lambda function: %s", utils.ColorizeItem(*function.FunctionName)), nil)
+			if details, ok := output.([]LambdaDetails); ok {
+				for _, detail := range details {
+					functionName := *detail.Function.FunctionName
+					codeLocation := *detail.Code.Code.Location
+					utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Lambda function: %s", utils.ColorizeItem(functionName)), nil)
+					utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Code Location: %s", codeLocation), nil)
 				}
 			}
 			return nil
