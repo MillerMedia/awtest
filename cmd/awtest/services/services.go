@@ -28,6 +28,7 @@ import (
 func AllServices() []types.AWSService {
 	var allServices []types.AWSService
 
+	allServices = append(allServices, sts.STSCalls...)
 	allServices = append(allServices, amplify.AmplifyCalls...)
 	allServices = append(allServices, apigateway.APIGatewayCalls...)
 	allServices = append(allServices, appsync.AppSyncCalls...)
@@ -48,7 +49,6 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ses.SESCalls...)
 	allServices = append(allServices, sns.SNSCalls...)
 	allServices = append(allServices, sqs.SQSCalls...)
-	allServices = append(allServices, sts.STSCalls...)
 
 	return allServices
 }
