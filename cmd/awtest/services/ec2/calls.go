@@ -34,11 +34,16 @@ var EC2Calls = []types.AWSService{
 			}
 			if instances, ok := output.([]*ec2.Instance); ok {
 				for _, instance := range instances {
+					ipAddress := ""
+					if instance.PublicIpAddress != nil {
+						ipAddress = *instance.PublicIpAddress
+					}
+
 					utils.PrintResult(debug, "", "ec2:DescribeInstances", fmt.Sprintf("EC2 instance: [ID: %s, State: %s, Type: %s, IP: %s]",
 						utils.ColorizeItem(*instance.InstanceId),
 						*instance.State.Name,
 						*instance.InstanceType,
-						*instance.PublicIpAddress), nil)
+						ipAddress), nil)
 				}
 			}
 			return nil
