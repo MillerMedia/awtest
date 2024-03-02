@@ -30,5 +30,6 @@ var EventbridgeCalls = []types.AWSService{
 			}
 			return nil
 		},
+		ModuleName: types.DefaultModuleName,
 	},
 }
