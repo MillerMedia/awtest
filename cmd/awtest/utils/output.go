@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -102,4 +103,8 @@ func MaskSecret(secret string) string {
 		return "******" // Return all asterisks if the secret is too short
 	}
 	return secret[:2] + "****" + secret[len(secret)-2:]
+}
+
+func UnmarshalJSON(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
 }
