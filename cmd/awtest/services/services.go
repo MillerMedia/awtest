@@ -10,6 +10,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/dynamodb"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticbeanstalk"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/eventbridge"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/glacier"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/iam"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/iot"
@@ -38,6 +39,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, dynamodb.DynamoDBCalls...)
 	allServices = append(allServices, ec2.EC2Calls...)
 	allServices = append(allServices, elasticbeanstalk.ElasticBeanstalkCalls...)
+	allServices = append(allServices, eventbridge.EventbridgeCalls...)
 	allServices = append(allServices, glacier.GlacierCalls...)
 	allServices = append(allServices, iam.IAMCalls...)
 	allServices = append(allServices, iot.IoTCalls...)
