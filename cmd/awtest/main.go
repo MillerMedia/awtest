@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-const Version = "v0.1.0"
+const Version = "v0.2.0"
 
 func main() {
 	fmt.Println("     /\\ \\        / /__   __|      | |")
