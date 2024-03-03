@@ -1,6 +1,10 @@
 package services
 
 import (
+	"github.com/MillerMedia/awtest/cmd/awtest/services/amplify"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/apigateway"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/appsync"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/batch"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudformation"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudfront"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudtrail"
@@ -11,7 +15,25 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticbeanstalk"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eventbridge"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/glacier"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/glue"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/iam"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/iot"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ivs"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ivschat"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ivsrealtime"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/kms"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/lambda"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/rds"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/route53"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/s3"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/secretsmanager"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ses"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/sns"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/sqs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sts"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/transcribe"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/waf"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 )
 
