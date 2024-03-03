@@ -78,4 +78,33 @@ var CloudwatchCalls = []types.AWSService{
 		},
 		ModuleName: types.DefaultModuleName,
 	},
+	{
+		Name: "cloudwatchlogs:ListMetrics",
+		Call: func(sess *session.Session) (interface{}, error) {
+			var allMetrics []*cloudwatch.Metric
+			for _, region := range types.Regions {
+				sess.Config.Region = aws.String(region)
+				svc := cloudwatch.New(sess)
+				input := &cloudwatch.ListMetricsInput{}
+				output, err := svc.ListMetrics(input)
+				if err != nil {
+					return nil, err
+				}
+				allMetrics = append(allMetrics, output.Metrics...)
+			}
+			return allMetrics, nil
+		},
+		Process: func(output interface{}, err error, debug bool) error {
+			if err != nil {
+				return utils.HandleAWSError(debug, "cloudwatchlogs:ListMetrics", err)
+			}
+			if metrics, ok := output.([]*cloudwatch.Metric); ok {
+				for _, metric := range metrics {
+					utils.PrintResult(debug, "", "cloudwatchlogs:ListMetrics", fmt.Sprintf("Found Metric: %s", *metric.MetricName), nil)
+				}
+			}
+			return nil
+		},
+		ModuleName: types.DefaultModuleName,
+	},
 }

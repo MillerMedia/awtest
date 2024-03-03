@@ -10,24 +10,6 @@ import (
 
 var IoTCalls = []types.AWSService{
 	{
-		Name: "iot:GetStatistics",
-		Call: func(sess *session.Session) (interface{}, error) {
-			svc := iot.New(sess)
-			input := &iot.GetStatisticsInput{}
-			return svc.GetStatistics(input)
-		},
-		Process: func(output interface{}, err error, debug bool) error {
-			if err != nil {
-				return utils.HandleAWSError(debug, "iot:GetStatistics", err)
-			}
-			if statistics, ok := output.(*iot.GetStatisticsOutput); ok {
-				utils.PrintResult(debug, "", "iot:GetStatistics", fmt.Sprintf("Statistics: %v", statistics.Statistics), nil)
-			}
-			return nil
-		},
-		ModuleName: types.DefaultModuleName,
-	},
-	{
 		Name: "iot:ListThings",
 		Call: func(sess *session.Session) (interface{}, error) {
 			svc := iot.New(sess)

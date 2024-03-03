@@ -74,4 +74,24 @@ var TranscribeCalls = []types.AWSService{
 		},
 		ModuleName: types.DefaultModuleName,
 	},
+	{
+		Name: "transcribe:StartTranscriptionJob",
+		Call: func(sess *session.Session) (interface{}, error) {
+			svc := transcribeservice.New(sess)
+			input := &transcribeservice.StartTranscriptionJobInput{}
+			return svc.StartTranscriptionJob(input)
+		},
+		Process: func(output interface{}, err error, debug bool) error {
+			if err != nil {
+				return utils.HandleAWSError(debug, "transcribe:StartTranscriptionJob", err)
+			}
+
+			if jobOutput, ok := output.(*transcribeservice.StartTranscriptionJobOutput); ok {
+				utils.PrintResult(debug, "", "transcribe:StartTranscriptionJob", *jobOutput.TranscriptionJob.TranscriptionJobName, nil)
+			}
+
+			return nil
+		},
+		ModuleName: types.DefaultModuleName,
+	},
 }
