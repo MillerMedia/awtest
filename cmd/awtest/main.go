@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
 	"github.com/MillerMedia/awtest/cmd/awtest/services"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -26,10 +27,12 @@ func main() {
 
 	awsAccessKeyID := flag.String("access-key-id", "", "AWS Access Key ID")
 	awsSecretAccessKey := flag.String("secret-access-key", "", "AWS Secret Access Key")
+	awsSessionToken := flag.String("session-token", "", "AWS Session Token (optional)")
 	awsRegion := flag.String("region", "us-west-2", "AWS Region")
 
 	awsAccessKeyIDAbbr := flag.String("aki", "", "Abbreviated AWS Access Key ID")
 	awsSecretAccessKeyAbbr := flag.String("sak", "", "Abbreviated AWS Secret Access Key")
+	awsSessionTokenAbbr := flag.String("st", "", "Abbreviated AWS Session Token")
 
 	debug := flag.Bool("debug", false, "Enable debug mode")
 
@@ -41,12 +44,18 @@ func main() {
 	if *awsSecretAccessKeyAbbr != "" {
 		awsSecretAccessKey = awsSecretAccessKeyAbbr
 	}
+	if *awsSessionTokenAbbr != "" {
+		awsSessionToken = awsSessionTokenAbbr
+	}
 
 	if *awsAccessKeyID == "" {
 		*awsAccessKeyID = os.Getenv("AWS_ACCESS_KEY_ID")
 	}
 	if *awsSecretAccessKey == "" {
 		*awsSecretAccessKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	}
+	if *awsSessionToken == "" {
+		*awsSessionToken = os.Getenv("AWS_SESSION_TOKEN")
 	}
 
 	var sess *session.Session
@@ -64,11 +73,20 @@ func main() {
 			return
 		}
 	} else {
-		// If keys are provided, use them to create session
-		sess, _ = session.NewSession(&aws.Config{
-			Region:      aws.String(*awsRegion),
-			Credentials: credentials.NewStaticCredentials(*awsAccessKeyID, *awsSecretAccessKey, ""),
-		})
+		// Check if the access key starts with 'ASIA'
+		if strings.HasPrefix(*awsAccessKeyID, "ASIA") && *awsSessionToken != "" {
+			// Use the session token as well
+			sess, _ = session.NewSession(&aws.Config{
+				Region:      aws.String(*awsRegion),
+				Credentials: credentials.NewStaticCredentials(*awsAccessKeyID, *awsSecretAccessKey, *awsSessionToken),
+			})
+		} else {
+			// If keys are provided, use them to create session without session token
+			sess, _ = session.NewSession(&aws.Config{
+				Region:      aws.String(*awsRegion),
+				Credentials: credentials.NewStaticCredentials(*awsAccessKeyID, *awsSecretAccessKey, ""),
+			})
+		}
 	}
 
 	if *debug {
@@ -77,6 +95,9 @@ func main() {
 		fmt.Println("Using the following AWS configuration:")
 		fmt.Println("Access Key ID:", *awsAccessKeyID)
 		fmt.Println("Secret Access Key:", utils.MaskSecret(*awsSecretAccessKey))
+		if *awsSessionToken != "" {
+			fmt.Println("Session Token:", utils.MaskSecret(*awsSessionToken))
+		}
 		fmt.Println("Region:", *awsRegion)
 		fmt.Println("-----------------------------")
 	}
