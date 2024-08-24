@@ -32,6 +32,7 @@ func main() {
 
 	awsAccessKeyIDAbbr := flag.String("aki", "", "Abbreviated AWS Access Key ID")
 	awsSecretAccessKeyAbbr := flag.String("sak", "", "Abbreviated AWS Secret Access Key")
+	awsSessionTokenAbbr := flag.String("st", "", "Abbreviated AWS Session Token")
 
 	debug := flag.Bool("debug", false, "Enable debug mode")
 
@@ -42,6 +43,9 @@ func main() {
 	}
 	if *awsSecretAccessKeyAbbr != "" {
 		awsSecretAccessKey = awsSecretAccessKeyAbbr
+	}
+	if *awsSessionTokenAbbr != "" {
+		awsSessionToken = awsSessionTokenAbbr
 	}
 
 	if *awsAccessKeyID == "" {
