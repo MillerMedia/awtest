@@ -18,6 +18,7 @@ go install -v github.com/MillerMedia/awtest/cmd/awtest@latest
 
   ```sh
   brew tap MillerMedia/awtest
+  brew update
   brew install awtest
   ```
 
