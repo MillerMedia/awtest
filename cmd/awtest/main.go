@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strings"
 	"github.com/MillerMedia/awtest/cmd/awtest/services"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -11,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"os"
+	"strings"
 )
 
 const Version = "v0.2.0"
@@ -58,16 +58,30 @@ func main() {
 		*awsSessionToken = os.Getenv("AWS_SESSION_TOKEN")
 	}
 
+	// Check if AWS_PROFILE is set and no parameters were provided
+	awsProfile := os.Getenv("AWS_PROFILE")
 	var sess *session.Session
 	var err error
 
 	if *awsAccessKeyID == "" || *awsSecretAccessKey == "" {
-		sess, err = session.NewSessionWithOptions(session.Options{
-			SharedConfigState: session.SharedConfigEnable,
-			Config: aws.Config{
-				Region: aws.String(*awsRegion),
-			},
-		})
+		if awsProfile != "" {
+			// Use the AWS_PROFILE if set and no access keys are provided
+			sess, err = session.NewSessionWithOptions(session.Options{
+				Profile:           awsProfile,
+				SharedConfigState: session.SharedConfigEnable,
+				Config: aws.Config{
+					Region: aws.String(*awsRegion),
+				},
+			})
+		} else {
+			// Fall back to default shared config if no profile is set
+			sess, err = session.NewSessionWithOptions(session.Options{
+				SharedConfigState: session.SharedConfigEnable,
+				Config: aws.Config{
+					Region: aws.String(*awsRegion),
+				},
+			})
+		}
 		if err != nil {
 			fmt.Println("Failed to create session with shared config: ", err)
 			return
@@ -93,10 +107,21 @@ func main() {
 		fmt.Println("Debug mode enabled")
 		fmt.Println("-----------------------------")
 		fmt.Println("Using the following AWS configuration:")
-		fmt.Println("Access Key ID:", *awsAccessKeyID)
-		fmt.Println("Secret Access Key:", utils.MaskSecret(*awsSecretAccessKey))
-		if *awsSessionToken != "" {
-			fmt.Println("Session Token:", utils.MaskSecret(*awsSessionToken))
+
+		// Get credentials from session if they are not provided explicitly
+		creds, err := sess.Config.Credentials.Get()
+		if err != nil {
+			fmt.Println("Failed to retrieve credentials from session: ", err)
+		} else {
+			fmt.Println("Access Key ID:", creds.AccessKeyID)
+			fmt.Println("Secret Access Key:", utils.MaskSecret(creds.SecretAccessKey))
+			if creds.SessionToken != "" {
+				fmt.Println("Session Token:", utils.MaskSecret(creds.SessionToken))
+			}
+		}
+
+		if awsProfile != "" {
+			fmt.Println("Profile:", awsProfile)
 		}
 		fmt.Println("Region:", *awsRegion)
 		fmt.Println("-----------------------------")
