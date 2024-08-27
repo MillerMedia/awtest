@@ -10,6 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 )
 
+type LogGroupWithStreams struct {
+	LogGroup   *cloudwatchlogs.LogGroup
+	LogStreams []*cloudwatchlogs.LogStream
+}
+
 var CloudwatchCalls = []types.AWSService{
 	{
 		Name: "cloudwatch:DescribeAlarms",
@@ -40,38 +45,74 @@ var CloudwatchCalls = []types.AWSService{
 		ModuleName: types.DefaultModuleName,
 	},
 	{
-		Name: "cloudwatchlogs:DescribeLogGroups",
+		Name: "cloudwatchlogs:DescribeLogGroupsAndStreams",
 		Call: func(sess *session.Session) (interface{}, error) {
-			originalConfig := sess.Config
-			var allLogGroups []*cloudwatchlogs.LogGroup
+			var allLogGroupsWithStreams []*LogGroupWithStreams
+
 			for _, region := range types.Regions {
 				regionConfig := &aws.Config{
 					Region:      aws.String(region),
-					Credentials: originalConfig.Credentials,
+					Credentials: sess.Config.Credentials,
 				}
 				regionSess, err := session.NewSession(regionConfig)
 				if err != nil {
 					return nil, err
 				}
 				svc := cloudwatchlogs.New(regionSess)
+
+				// Describe Log Groups
 				input := &cloudwatchlogs.DescribeLogGroupsInput{}
 				err = svc.DescribeLogGroupsPages(input, func(output *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
-					allLogGroups = append(allLogGroups, output.LogGroups...)
+					for _, logGroup := range output.LogGroups {
+						// Describe Log Streams for each Log Group
+						streamInput := &cloudwatchlogs.DescribeLogStreamsInput{
+							LogGroupName: logGroup.LogGroupName,
+						}
+						var logStreams []*cloudwatchlogs.LogStream
+						err := svc.DescribeLogStreamsPages(streamInput, func(streamOutput *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
+							logStreams = append(logStreams, streamOutput.LogStreams...)
+							return true // continue paging
+						})
+						if err != nil {
+							return false
+						}
+
+						allLogGroupsWithStreams = append(allLogGroupsWithStreams, &LogGroupWithStreams{
+							LogGroup:   logGroup,
+							LogStreams: logStreams,
+						})
+					}
 					return true // continue paging
 				})
 				if err != nil {
 					return nil, err
 				}
 			}
-			return allLogGroups, nil
+
+			return allLogGroupsWithStreams, nil
 		},
 		Process: func(output interface{}, err error, debug bool) error {
 			if err != nil {
-				return utils.HandleAWSError(debug, "cloudwatchlogs:DescribeLogGroups", err)
+				return utils.HandleAWSError(debug, "cloudwatchlogs:DescribeLogGroupsAndStreams", err)
 			}
-			if logGroups, ok := output.([]*cloudwatchlogs.LogGroup); ok {
-				for _, logGroup := range logGroups {
-					utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroups", fmt.Sprintf("Found Log Group: %s", *logGroup.LogGroupName), nil)
+			if logGroupsWithStreams, ok := output.([]*LogGroupWithStreams); ok {
+				if len(logGroupsWithStreams) == 0 {
+					utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", "No log groups found.", nil)
+				} else {
+					for _, lgws := range logGroupsWithStreams {
+						// Print the Log Group
+						utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", fmt.Sprintf("Found Log Group: %s", *lgws.LogGroup.LogGroupName), nil)
+
+						// Check if there are any Log Streams
+						if len(lgws.LogStreams) > 0 {
+							utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", fmt.Sprintf("  Log Streams for %s:", *lgws.LogGroup.LogGroupName), nil)
+							for _, logStream := range lgws.LogStreams {
+								utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", fmt.Sprintf("    - Log Stream: %s", *logStream.LogStreamName), nil)
+							}
+						} else {
+							utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", "  No log streams found or access denied.", nil)
+						}
+					}
 				}
 			}
 			return nil
