@@ -13,6 +13,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cognitoidentity"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/dynamodb"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ecs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticbeanstalk"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eventbridge"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/glacier"
@@ -53,6 +54,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, cognitoidentity.CognitoIdentityCalls...)
 	allServices = append(allServices, dynamodb.DynamoDBCalls...)
 	allServices = append(allServices, ec2.EC2Calls...)
+	allServices = append(allServices, ecs.ECSCalls...)
 	allServices = append(allServices, elasticbeanstalk.ElasticBeanstalkCalls...)
 	allServices = append(allServices, eventbridge.EventbridgeCalls...)
 	allServices = append(allServices, glacier.GlacierCalls...)
