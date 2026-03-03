@@ -127,13 +127,14 @@ func main() {
 		fmt.Println("-----------------------------")
 	}
 
+	var results []types.ScanResult
 	for _, service := range services.AllServices() {
 		output, err := service.Call(sess)
-		if err := service.Process(output, err, *debug); err != nil {
-			// Check if the error is InvalidKeyError and exit if so
-			if _, ok := err.(*types.InvalidKeyError); ok {
-				os.Exit(1)
-			}
-		}
+		serviceResults := service.Process(output, err, *debug)
+		results = append(results, serviceResults...)
 	}
+
+	// NOTE: Currently maintaining backward compatibility by printing results within Process methods
+	// In future stories, this will be replaced with formatter-based output
+	// The results slice is collected but not yet used for output
 }

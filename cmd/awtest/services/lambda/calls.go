@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"time"
 )
 
 type LambdaDetails struct {
@@ -64,24 +65,104 @@ var LambdaCalls = []types.AWSService{
 			}
 			return allDetails, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "lambda:ListFunctions", err)
+				utils.HandleAWSError(debug, "lambda:ListFunctions", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "Lambda",
+						MethodName:  "lambda:ListFunctions",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if details, ok := output.([]LambdaDetails); ok {
 				if len(details) == 0 {
 					utils.PrintResult(debug, "", "lambda:ListFunctions", "No Lambda functions found.", nil)
 				} else {
 					for _, detail := range details {
-						functionName := *detail.Function.FunctionName
-						codeLocation := *detail.Code.Code.Location
-						memorySize := fmt.Sprintf("%d MB", *detail.Configuration.MemorySize)
-						timeout := fmt.Sprintf("%d seconds", *detail.Configuration.Timeout)
-						runtime := *detail.Configuration.Runtime
-						handler := *detail.Configuration.Handler
-						role := *detail.Configuration.Role
-						lastModified := *detail.Configuration.LastModified
+						functionName := ""
+						if detail.Function.FunctionName != nil {
+							functionName = *detail.Function.FunctionName
+						}
 
+						codeLocation := ""
+						if detail.Code.Code.Location != nil {
+							codeLocation = *detail.Code.Code.Location
+						}
+
+						memorySize := ""
+						timeout := ""
+						runtime := ""
+						handler := ""
+						role := ""
+						lastModified := ""
+
+						if detail.Configuration.MemorySize != nil {
+							memorySize = fmt.Sprintf("%d MB", *detail.Configuration.MemorySize)
+						}
+						if detail.Configuration.Timeout != nil {
+							timeout = fmt.Sprintf("%d seconds", *detail.Configuration.Timeout)
+						}
+						if detail.Configuration.Runtime != nil {
+							runtime = *detail.Configuration.Runtime
+						}
+						if detail.Configuration.Handler != nil {
+							handler = *detail.Configuration.Handler
+						}
+						if detail.Configuration.Role != nil {
+							role = *detail.Configuration.Role
+						}
+						if detail.Configuration.LastModified != nil {
+							lastModified = *detail.Configuration.LastModified
+						}
+
+						// Build details map
+						funcDetails := map[string]interface{}{
+							"region":        detail.Region,
+							"runtime":       runtime,
+							"memory_size":   memorySize,
+							"timeout":       timeout,
+							"handler":       handler,
+							"role":          role,
+							"last_modified": lastModified,
+							"code_location": codeLocation,
+						}
+
+						// Add description if present
+						if detail.Configuration.Description != nil && *detail.Configuration.Description != "" {
+							funcDetails["description"] = *detail.Configuration.Description
+						}
+
+						// Add environment variables if present
+						if detail.Configuration.Environment != nil && len(detail.Configuration.Environment.Variables) > 0 {
+							envVars := make(map[string]string)
+							for key, value := range detail.Configuration.Environment.Variables {
+								envVars[key] = aws.StringValue(value)
+							}
+							funcDetails["environment_variables"] = envVars
+						}
+
+						// Add KMS Key ARN if present
+						if detail.Configuration.KMSKeyArn != nil && *detail.Configuration.KMSKeyArn != "" {
+							funcDetails["kms_key_arn"] = *detail.Configuration.KMSKeyArn
+						}
+
+						// Add function result
+						results = append(results, types.ScanResult{
+							ServiceName:  "Lambda",
+							MethodName:   "lambda:ListFunctions",
+							ResourceType: "function",
+							ResourceName: functionName,
+							Details:      funcDetails,
+							Timestamp:    time.Now(),
+						})
+
+						// Keep backward compatibility - print results
 						utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Lambda function: %s", utils.ColorizeItem(functionName)), nil)
 						utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Runtime: %s", runtime), nil)
 						utils.PrintResult(debug, "", "lambda:ListFunctions", fmt.Sprintf("Memory Size: %s", memorySize), nil)
@@ -112,7 +193,7 @@ var LambdaCalls = []types.AWSService{
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

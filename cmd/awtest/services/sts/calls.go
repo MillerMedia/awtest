@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"strings"
+	"time"
 )
 
 var STSCalls = []types.AWSService{
@@ -17,17 +18,54 @@ var STSCalls = []types.AWSService{
 			output, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 			return output, err
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "sts:GetCallerIdentity", err)
+				utils.HandleAWSError(debug, "sts:GetCallerIdentity", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "STS",
+						MethodName:  "sts:GetCallerIdentity",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if stsOutput, ok := output.(*sts.GetCallerIdentityOutput); ok {
-				utils.PrintResult(debug, "", "user-id", *stsOutput.UserId, nil)
-				utils.PrintResult(debug, "", "account-number", *stsOutput.Account, nil)
-				utils.PrintResult(debug, "", "iam-arn", *stsOutput.Arn, nil)
+				userId := ""
+				account := ""
+				arn := ""
+				if stsOutput.UserId != nil {
+					userId = *stsOutput.UserId
+				}
+				if stsOutput.Account != nil {
+					account = *stsOutput.Account
+				}
+				if stsOutput.Arn != nil {
+					arn = *stsOutput.Arn
+				}
+
+				// Add identity result
+				results = append(results, types.ScanResult{
+					ServiceName:  "STS",
+					MethodName:   "sts:GetCallerIdentity",
+					ResourceType: "identity",
+					ResourceName: userId,
+					Details: map[string]interface{}{
+						"account": account,
+						"arn":     arn,
+					},
+					Timestamp: time.Now(),
+				})
+
+				utils.PrintResult(debug, "", "user-id", userId, nil)
+				utils.PrintResult(debug, "", "account-number", account, nil)
+				utils.PrintResult(debug, "", "iam-arn", arn, nil)
 
 				// Parse the ARN inline to get user name
-				arnParts := strings.Split(*stsOutput.Arn, "/")
+				arnParts := strings.Split(arn, "/")
 				userName := arnParts[len(arnParts)-1]
 				utils.PrintResult(debug, "", "iam-user", userName, nil)
 
@@ -42,7 +80,21 @@ var STSCalls = []types.AWSService{
 					utils.HandleAWSError(debug, "iam:ListAttachedUserPolicies", err)
 				} else {
 					for _, policy := range attachedPolicyOutput.AttachedPolicies {
-						utils.PrintResult(debug, "", "iam:ListAttachedUserPolicies", *policy.PolicyArn, nil)
+						policyArn := ""
+						if policy.PolicyArn != nil {
+							policyArn = *policy.PolicyArn
+						}
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "IAM",
+							MethodName:   "iam:ListAttachedUserPolicies",
+							ResourceType: "policy",
+							ResourceName: policyArn,
+							Details:      map[string]interface{}{"user": userName},
+							Timestamp:    time.Now(),
+						})
+
+						utils.PrintResult(debug, "", "iam:ListAttachedUserPolicies", policyArn, nil)
 					}
 				}
 
@@ -55,11 +107,25 @@ var STSCalls = []types.AWSService{
 					utils.HandleAWSError(debug, "iam:ListUserPolicies", err)
 				} else {
 					for _, policy := range policyOutput.PolicyNames {
-						utils.PrintResult(debug, "", "iam:ListUserPolicies", *policy, nil)
+						policyName := ""
+						if policy != nil {
+							policyName = *policy
+						}
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "IAM",
+							MethodName:   "iam:ListUserPolicies",
+							ResourceType: "inline-policy",
+							ResourceName: policyName,
+							Details:      map[string]interface{}{"user": userName},
+							Timestamp:    time.Now(),
+						})
+
+						utils.PrintResult(debug, "", "iam:ListUserPolicies", policyName, nil)
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

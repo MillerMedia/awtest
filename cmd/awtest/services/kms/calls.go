@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"time"
 )
 
 var KMSCalls = []types.AWSService{
@@ -25,16 +26,41 @@ var KMSCalls = []types.AWSService{
 			}
 			return allKeys, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "kms:ListKeys", err)
-			}
-			if keys, ok := output.([]*kms.KeyListEntry); ok {
-				for _, key := range keys {
-					utils.PrintResult(debug, "", "kms:ListKeys", fmt.Sprintf("KMS key: %s", utils.ColorizeItem(*key.KeyId)), nil)
+				utils.HandleAWSError(debug, "kms:ListKeys", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "KMS",
+						MethodName:  "kms:ListKeys",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
 				}
 			}
-			return nil
+
+			if keys, ok := output.([]*kms.KeyListEntry); ok {
+				for _, key := range keys {
+					keyId := ""
+					if key.KeyId != nil {
+						keyId = *key.KeyId
+					}
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "KMS",
+						MethodName:   "kms:ListKeys",
+						ResourceType: "key",
+						ResourceName: keyId,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "kms:ListKeys", fmt.Sprintf("KMS key: %s", utils.ColorizeItem(keyId)), nil)
+				}
+			}
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

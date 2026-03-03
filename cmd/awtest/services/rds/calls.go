@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"time"
 )
 
 var RDSCalls = []types.AWSService{
@@ -25,16 +26,45 @@ var RDSCalls = []types.AWSService{
 			}
 			return allDBInstances, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "rds:DescribeDBInstances", err)
-			}
-			if dbInstances, ok := output.([]*rds.DBInstance); ok {
-				for _, db := range dbInstances {
-					utils.PrintResult(debug, "", "rds:DescribeDBInstances", fmt.Sprintf("Found RDS instance: %s (%s)", *db.DBInstanceIdentifier, *db.AvailabilityZone), nil)
+				utils.HandleAWSError(debug, "rds:DescribeDBInstances", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "RDS",
+						MethodName:  "rds:DescribeDBInstances",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
 				}
 			}
-			return nil
+
+			if dbInstances, ok := output.([]*rds.DBInstance); ok {
+				for _, db := range dbInstances {
+					dbId := ""
+					az := ""
+					if db.DBInstanceIdentifier != nil {
+						dbId = *db.DBInstanceIdentifier
+					}
+					if db.AvailabilityZone != nil {
+						az = *db.AvailabilityZone
+					}
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "RDS",
+						MethodName:   "rds:DescribeDBInstances",
+						ResourceType: "db-instance",
+						ResourceName: dbId,
+						Details:      map[string]interface{}{"availability_zone": az},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "rds:DescribeDBInstances", fmt.Sprintf("Found RDS instance: %s (%s)", dbId, az), nil)
+				}
+			}
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

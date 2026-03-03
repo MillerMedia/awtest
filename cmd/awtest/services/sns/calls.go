@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"strings"
+	"time"
 )
 
 type TopicWithAttributes struct {
@@ -64,19 +65,53 @@ var SNSCalls = []types.AWSService{
 			}
 			return allTopicsWithAttributes, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "sns:ListTopics", err)
+				utils.HandleAWSError(debug, "sns:ListTopics", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "SNS",
+						MethodName:  "sns:ListTopics",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if topics, ok := output.([]TopicWithAttributes); ok {
 				for _, topicWithAttr := range topics {
-					colorizedTopic := utils.ColorizeItem(*topicWithAttr.Topic.TopicArn)
+					topicArn := ""
+					if topicWithAttr.Topic.TopicArn != nil {
+						topicArn = *topicWithAttr.Topic.TopicArn
+					}
+
+					// Build details from attributes
+					topicDetails := make(map[string]interface{})
+					for name, value := range topicWithAttr.Attributes {
+						if value != nil {
+							topicDetails[name] = *value
+						}
+					}
+
+					// Add topic result
+					results = append(results, types.ScanResult{
+						ServiceName:  "SNS",
+						MethodName:   "sns:ListTopics",
+						ResourceType: "topic",
+						ResourceName: topicArn,
+						Details:      topicDetails,
+						Timestamp:    time.Now(),
+					})
+
+					colorizedTopic := utils.ColorizeItem(topicArn)
 					utils.PrintResult(debug, "", "sns:ListTopics", fmt.Sprintf("SNS Topic: %s", colorizedTopic), nil)
 
 					// Print attributes
 					for name, value := range topicWithAttr.Attributes {
 						// Only display DisplayName and number of subscriptions
-						if (name == "DisplayName" || name == "SubscriptionsConfirmed" || name == "SubscriptionsPending" || name == "SubscriptionsDeleted") && *value != "" {
+						if (name == "DisplayName" || name == "SubscriptionsConfirmed" || name == "SubscriptionsPending" || name == "SubscriptionsDeleted") && value != nil && *value != "" {
 							utils.PrintResult(debug, "", "sns:GetTopicAttributes", fmt.Sprintf("SNS Topic: %s | %s = %s", colorizedTopic, name, *value), nil)
 						}
 					}
@@ -84,7 +119,7 @@ var SNSCalls = []types.AWSService{
 					fmt.Println()
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

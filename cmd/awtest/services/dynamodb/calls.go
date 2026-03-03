@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"time"
 )
 
 var DynamoDBCalls = []types.AWSService{
@@ -25,16 +26,41 @@ var DynamoDBCalls = []types.AWSService{
 			}
 			return allTableNames, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "dynamodb:ListTables", err)
-			}
-			if tableNames, ok := output.([]*string); ok {
-				for _, tableName := range tableNames {
-					utils.PrintResult(debug, "", "dynamodb:ListTables", fmt.Sprintf("DynamoDB table: %s", utils.ColorizeItem(*tableName)), nil)
+				utils.HandleAWSError(debug, "dynamodb:ListTables", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "DynamoDB",
+						MethodName:  "dynamodb:ListTables",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
 				}
 			}
-			return nil
+
+			if tableNames, ok := output.([]*string); ok {
+				for _, tableName := range tableNames {
+					tblName := ""
+					if tableName != nil {
+						tblName = *tableName
+					}
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "DynamoDB",
+						MethodName:   "dynamodb:ListTables",
+						ResourceType: "table",
+						ResourceName: tblName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "dynamodb:ListTables", fmt.Sprintf("DynamoDB table: %s", utils.ColorizeItem(tblName)), nil)
+				}
+			}
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -53,20 +79,45 @@ var DynamoDBCalls = []types.AWSService{
 			}
 			return allExports, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "dynamodb:ListExports", err)
+				utils.HandleAWSError(debug, "dynamodb:ListExports", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "DynamoDB",
+						MethodName:  "dynamodb:ListExports",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if exports, ok := output.([]*dynamodb.ExportSummary); ok {
 				if len(exports) == 0 {
 					utils.PrintAccessGranted(debug, "dynamodb:ListExports", "DynamoDB exports")
 				} else {
 					for _, export := range exports {
-						utils.PrintResult(debug, "", "dynamodb:ListExports", fmt.Sprintf("DynamoDB export: %s", utils.ColorizeItem(*export.ExportArn)), nil)
+						exportArn := ""
+						if export.ExportArn != nil {
+							exportArn = *export.ExportArn
+						}
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "DynamoDB",
+							MethodName:   "dynamodb:ListExports",
+							ResourceType: "export",
+							ResourceName: exportArn,
+							Details:      map[string]interface{}{},
+							Timestamp:    time.Now(),
+						})
+
+						utils.PrintResult(debug, "", "dynamodb:ListExports", fmt.Sprintf("DynamoDB export: %s", utils.ColorizeItem(exportArn)), nil)
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -85,20 +136,45 @@ var DynamoDBCalls = []types.AWSService{
 			}
 			return allBackups, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "dynamodb:ListBackups", err)
+				utils.HandleAWSError(debug, "dynamodb:ListBackups", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "DynamoDB",
+						MethodName:  "dynamodb:ListBackups",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if backups, ok := output.([]*dynamodb.BackupSummary); ok {
 				if len(backups) == 0 {
 					utils.PrintAccessGranted(debug, "dynamodb:ListBackups", "DynamoDB backups")
 				} else {
 					for _, backup := range backups {
-						utils.PrintResult(debug, "", "dynamodb:ListBackups", fmt.Sprintf("DynamoDB backup: %s", utils.ColorizeItem(*backup.BackupArn)), nil)
+						backupArn := ""
+						if backup.BackupArn != nil {
+							backupArn = *backup.BackupArn
+						}
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "DynamoDB",
+							MethodName:   "dynamodb:ListBackups",
+							ResourceType: "backup",
+							ResourceName: backupArn,
+							Details:      map[string]interface{}{},
+							Timestamp:    time.Now(),
+						})
+
+						utils.PrintResult(debug, "", "dynamodb:ListBackups", fmt.Sprintf("DynamoDB backup: %s", utils.ColorizeItem(backupArn)), nil)
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

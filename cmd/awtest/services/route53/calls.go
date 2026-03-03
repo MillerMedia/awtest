@@ -5,6 +5,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"time"
 )
 
 var Route53Calls = []types.AWSService{
@@ -20,16 +21,41 @@ var Route53Calls = []types.AWSService{
 				return output, nil
 			}
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "route53:ListHostedZones", err)
-			}
-			if zones, ok := output.(*route53.ListHostedZonesOutput); ok {
-				for _, zone := range zones.HostedZones {
-					utils.PrintResult(debug, "", "route53:ListHostedZones", *zone.Name, nil)
+				utils.HandleAWSError(debug, "route53:ListHostedZones", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "Route53",
+						MethodName:  "route53:ListHostedZones",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
 				}
 			}
-			return nil
+
+			if zones, ok := output.(*route53.ListHostedZonesOutput); ok {
+				for _, zone := range zones.HostedZones {
+					zoneName := ""
+					if zone.Name != nil {
+						zoneName = *zone.Name
+					}
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "Route53",
+						MethodName:   "route53:ListHostedZones",
+						ResourceType: "hosted-zone",
+						ResourceName: zoneName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "route53:ListHostedZones", zoneName, nil)
+				}
+			}
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -45,16 +71,40 @@ var Route53Calls = []types.AWSService{
 				return output, nil
 			}
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return err
-			}
-			if checks, ok := output.(*route53.ListHealthChecksOutput); ok {
-				for _, check := range checks.HealthChecks {
-					utils.PrintResult(debug, "", "route53:ListHealthChecks", *check.HealthCheckConfig.IPAddress, nil)
+				return []types.ScanResult{
+					{
+						ServiceName: "Route53",
+						MethodName:  "route53:ListHealthChecks",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
 				}
 			}
-			return nil
+
+			if checks, ok := output.(*route53.ListHealthChecksOutput); ok {
+				for _, check := range checks.HealthChecks {
+					ipAddr := ""
+					if check.HealthCheckConfig != nil && check.HealthCheckConfig.IPAddress != nil {
+						ipAddr = *check.HealthCheckConfig.IPAddress
+					}
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "Route53",
+						MethodName:   "route53:ListHealthChecks",
+						ResourceType: "health-check",
+						ResourceName: ipAddr,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "route53:ListHealthChecks", ipAddr, nil)
+				}
+			}
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/eventbridge"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"strings"
+	"time"
 )
 
 func arnToQueueUrl(arn string) string {
@@ -39,14 +40,39 @@ var SQSCalls = []types.AWSService{
 			}
 			return allQueues, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "sqs:ListQueues", err)
+				utils.HandleAWSError(debug, "sqs:ListQueues", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "SQS",
+						MethodName:  "sqs:ListQueues",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if queues, ok := output.([]*string); ok {
 				for _, queue := range queues {
+					queueUrl := ""
+					if queue != nil {
+						queueUrl = *queue
+					}
+
+					// Add queue result
+					results = append(results, types.ScanResult{
+						ServiceName:  "SQS",
+						MethodName:   "sqs:ListQueues",
+						ResourceType: "queue",
+						ResourceName: queueUrl,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
 					utils.PrintResult(debug, "", "sqs:ListQueues", fmt.Sprintf("================================================================================"), nil)
-					utils.PrintResult(debug, "", "sqs:ListQueues", fmt.Sprintf("Found SQS queue: %s", *queue), nil)
+					utils.PrintResult(debug, "", "sqs:ListQueues", fmt.Sprintf("Found SQS queue: %s", queueUrl), nil)
 
 					sess := session.Must(session.NewSession())
 					sess.Config.Region = aws.String("us-east-1")
@@ -184,7 +210,7 @@ var SQSCalls = []types.AWSService{
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"time"
 )
 
 var SecretsManagerCalls = []types.AWSService{
@@ -25,16 +26,41 @@ var SecretsManagerCalls = []types.AWSService{
 			}
 			return allSecrets, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "secretsmanager:ListSecrets", err)
-			}
-			if secrets, ok := output.([]*secretsmanager.SecretListEntry); ok {
-				for _, secret := range secrets {
-					utils.PrintResult(debug, "", "secretsmanager:ListSecrets", fmt.Sprintf("Found secret: %s", *secret.Name), nil)
+				utils.HandleAWSError(debug, "secretsmanager:ListSecrets", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "SecretsManager",
+						MethodName:  "secretsmanager:ListSecrets",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
 				}
 			}
-			return nil
+
+			if secrets, ok := output.([]*secretsmanager.SecretListEntry); ok {
+				for _, secret := range secrets {
+					secretName := ""
+					if secret.Name != nil {
+						secretName = *secret.Name
+					}
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "SecretsManager",
+						MethodName:   "secretsmanager:ListSecrets",
+						ResourceType: "secret",
+						ResourceName: secretName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "secretsmanager:ListSecrets", fmt.Sprintf("Found secret: %s", secretName), nil)
+				}
+			}
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

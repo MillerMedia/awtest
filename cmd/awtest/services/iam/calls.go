@@ -6,6 +6,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"time"
 )
 
 var IAMCalls = []types.AWSService{
@@ -19,26 +20,75 @@ var IAMCalls = []types.AWSService{
 				"sess":   sess,
 			}, err
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "iam:ListUsers", err)
+				utils.HandleAWSError(debug, "iam:ListUsers", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "IAM",
+						MethodName:  "iam:ListUsers",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if outputMap, ok := output.(map[string]interface{}); ok {
 				iamOutput, _ := outputMap["output"].(*iam.ListUsersOutput)
 				sess, _ := outputMap["sess"].(*session.Session)
 				svc := iam.New(sess)
 				for _, user := range iamOutput.Users {
-					utils.PrintResult(debug, "", "iam:ListUsers", fmt.Sprintf("IAM user: %s", utils.ColorizeItem(*user.UserName)), nil)
+					userName := ""
+					if user.UserName != nil {
+						userName = *user.UserName
+					}
+
+					// Add user result
+					results = append(results, types.ScanResult{
+						ServiceName:  "IAM",
+						MethodName:   "iam:ListUsers",
+						ResourceType: "user",
+						ResourceName: userName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
+					utils.PrintResult(debug, "", "iam:ListUsers", fmt.Sprintf("IAM user: %s", utils.ColorizeItem(userName)), nil)
 
 					// list groups for user
 					groupOutput, err := svc.ListGroupsForUser(&iam.ListGroupsForUserInput{
 						UserName: user.UserName,
 					})
 					if err != nil {
-						return utils.HandleAWSError(debug, "iam:ListGroupsForUser", err)
-					}
-					for _, group := range groupOutput.Groups {
-						utils.PrintResult(debug, "", "iam:ListGroupsForUser", fmt.Sprintf("IAM User: %s | group: %s", utils.ColorizeItem(*user.UserName), *group.GroupName), nil)
+						utils.HandleAWSError(debug, "iam:ListGroupsForUser", err)
+						results = append(results, types.ScanResult{
+							ServiceName:  "IAM",
+							MethodName:   "iam:ListGroupsForUser",
+							ResourceType: "user",
+							ResourceName: userName,
+							Error:        err,
+							Timestamp:    time.Now(),
+						})
+					} else {
+						for _, group := range groupOutput.Groups {
+							groupName := ""
+							if group.GroupName != nil {
+								groupName = *group.GroupName
+							}
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "IAM",
+								MethodName:   "iam:ListGroupsForUser",
+								ResourceType: "group",
+								ResourceName: groupName,
+								Details:      map[string]interface{}{"user": userName},
+								Timestamp:    time.Now(),
+							})
+
+							utils.PrintResult(debug, "", "iam:ListGroupsForUser", fmt.Sprintf("IAM User: %s | group: %s", utils.ColorizeItem(userName), groupName), nil)
+						}
 					}
 
 					// list attached user policies
@@ -46,10 +96,33 @@ var IAMCalls = []types.AWSService{
 						UserName: user.UserName,
 					})
 					if err != nil {
-						return utils.HandleAWSError(debug, "iam:ListAttachedUserPolicies", err)
-					}
-					for _, policy := range attachedPolicyOutput.AttachedPolicies {
-						utils.PrintResult(debug, "", "iam:ListAttachedUserPolicies", fmt.Sprintf("IAM user: %s | attached policy: %s", utils.ColorizeItem(*user.UserName), *policy.PolicyName), nil)
+						utils.HandleAWSError(debug, "iam:ListAttachedUserPolicies", err)
+						results = append(results, types.ScanResult{
+							ServiceName:  "IAM",
+							MethodName:   "iam:ListAttachedUserPolicies",
+							ResourceType: "user",
+							ResourceName: userName,
+							Error:        err,
+							Timestamp:    time.Now(),
+						})
+					} else {
+						for _, policy := range attachedPolicyOutput.AttachedPolicies {
+							policyName := ""
+							if policy.PolicyName != nil {
+								policyName = *policy.PolicyName
+							}
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "IAM",
+								MethodName:   "iam:ListAttachedUserPolicies",
+								ResourceType: "attached-policy",
+								ResourceName: policyName,
+								Details:      map[string]interface{}{"user": userName},
+								Timestamp:    time.Now(),
+							})
+
+							utils.PrintResult(debug, "", "iam:ListAttachedUserPolicies", fmt.Sprintf("IAM user: %s | attached policy: %s", utils.ColorizeItem(userName), policyName), nil)
+						}
 					}
 
 					// list user policies
@@ -57,10 +130,33 @@ var IAMCalls = []types.AWSService{
 						UserName: user.UserName,
 					})
 					if err != nil {
-						return utils.HandleAWSError(debug, "iam:ListUserPolicies", err)
-					}
-					for _, policyName := range policyOutput.PolicyNames {
-						utils.PrintResult(debug, "", "iam:ListUserPolicies", fmt.Sprintf("IAM user: %s | inline policy: %s", utils.ColorizeItem(*user.UserName), *policyName), nil)
+						utils.HandleAWSError(debug, "iam:ListUserPolicies", err)
+						results = append(results, types.ScanResult{
+							ServiceName:  "IAM",
+							MethodName:   "iam:ListUserPolicies",
+							ResourceType: "user",
+							ResourceName: userName,
+							Error:        err,
+							Timestamp:    time.Now(),
+						})
+					} else {
+						for _, policyName := range policyOutput.PolicyNames {
+							pName := ""
+							if policyName != nil {
+								pName = *policyName
+							}
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "IAM",
+								MethodName:   "iam:ListUserPolicies",
+								ResourceType: "inline-policy",
+								ResourceName: pName,
+								Details:      map[string]interface{}{"user": userName},
+								Timestamp:    time.Now(),
+							})
+
+							utils.PrintResult(debug, "", "iam:ListUserPolicies", fmt.Sprintf("IAM user: %s | inline policy: %s", utils.ColorizeItem(userName), pName), nil)
+						}
 					}
 
 					// list access keys
@@ -68,14 +164,37 @@ var IAMCalls = []types.AWSService{
 						UserName: user.UserName,
 					})
 					if err != nil {
-						return utils.HandleAWSError(debug, "iam:ListAccessKeys", err)
-					}
-					for _, accessKey := range accessKeyOutput.AccessKeyMetadata {
-						utils.PrintResult(debug, "", "iam:ListAccessKeys", fmt.Sprintf("IAM user: %s | access key: %s", utils.ColorizeItem(*user.UserName), *accessKey.AccessKeyId), nil)
+						utils.HandleAWSError(debug, "iam:ListAccessKeys", err)
+						results = append(results, types.ScanResult{
+							ServiceName:  "IAM",
+							MethodName:   "iam:ListAccessKeys",
+							ResourceType: "user",
+							ResourceName: userName,
+							Error:        err,
+							Timestamp:    time.Now(),
+						})
+					} else {
+						for _, accessKey := range accessKeyOutput.AccessKeyMetadata {
+							accessKeyID := ""
+							if accessKey.AccessKeyId != nil {
+								accessKeyID = *accessKey.AccessKeyId
+							}
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "IAM",
+								MethodName:   "iam:ListAccessKeys",
+								ResourceType: "access-key",
+								ResourceName: accessKeyID,
+								Details:      map[string]interface{}{"user": userName},
+								Timestamp:    time.Now(),
+							})
+
+							utils.PrintResult(debug, "", "iam:ListAccessKeys", fmt.Sprintf("IAM user: %s | access key: %s", utils.ColorizeItem(userName), accessKeyID), nil)
+						}
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

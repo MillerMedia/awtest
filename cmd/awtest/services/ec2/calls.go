@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"time"
 )
 
 type EC2InstanceDetails struct {
@@ -65,23 +66,79 @@ var EC2Calls = []types.AWSService{
 			}
 			return allDetails, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "ec2:DescribeInstances", err)
+				utils.HandleAWSError(debug, "ec2:DescribeInstances", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "EC2",
+						MethodName:  "ec2:DescribeInstances",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if details, ok := output.([]EC2InstanceDetails); ok {
 				for _, detail := range details {
 					instance := detail.Instance
+					instanceID := ""
+					if instance.InstanceId != nil {
+						instanceID = *instance.InstanceId
+					}
+
 					ipAddress := ""
 					if instance.PublicIpAddress != nil {
 						ipAddress = *instance.PublicIpAddress
 					}
 
-					// Print instance details
+					stateName := ""
+					if instance.State != nil && instance.State.Name != nil {
+						stateName = *instance.State.Name
+					}
+
+					instanceType := ""
+					if instance.InstanceType != nil {
+						instanceType = *instance.InstanceType
+					}
+
+					// Build details map
+					instanceDetails := map[string]interface{}{
+						"state":   stateName,
+						"type":    instanceType,
+						"ip":      ipAddress,
+						"elastic_ip": detail.ElasticIP,
+						"user_data":  detail.UserData,
+					}
+
+					// Add tags to details
+					if len(detail.Tags) > 0 {
+						tags := make(map[string]string)
+						for _, tag := range detail.Tags {
+							if tag.Key != nil && tag.Value != nil {
+								tags[*tag.Key] = *tag.Value
+							}
+						}
+						instanceDetails["tags"] = tags
+					}
+
+					// Add instance result
+					results = append(results, types.ScanResult{
+						ServiceName:  "EC2",
+						MethodName:   "ec2:DescribeInstances",
+						ResourceType: "instance",
+						ResourceName: instanceID,
+						Details:      instanceDetails,
+						Timestamp:    time.Now(),
+					})
+
+					// Keep backward compatibility - print results
 					utils.PrintResult(debug, "", "ec2:DescribeInstances", fmt.Sprintf("EC2 instance: [ID: %s, State: %s, Type: %s, IP: %s]",
-						utils.ColorizeItem(*instance.InstanceId),
-						*instance.State.Name,
-						*instance.InstanceType,
+						utils.ColorizeItem(instanceID),
+						stateName,
+						instanceType,
 						ipAddress), nil)
 
 					// Print Elastic IP if it exists
@@ -91,19 +148,21 @@ var EC2Calls = []types.AWSService{
 
 					// Print user data
 					if detail.UserData != "" {
-						utils.PrintResult(debug, "", "ec2:DescribeInstances", fmt.Sprintf("User Data for instance %s:\n%s", *instance.InstanceId, detail.UserData), nil)
+						utils.PrintResult(debug, "", "ec2:DescribeInstances", fmt.Sprintf("User Data for instance %s:\n%s", instanceID, detail.UserData), nil)
 					}
 
 					// Print tags if they exist
 					if len(detail.Tags) > 0 {
 						utils.PrintResult(debug, "", "ec2:DescribeInstances", "Tags:", nil)
 						for _, tag := range detail.Tags {
-							utils.PrintResult(debug, "", "ec2:DescribeInstances", fmt.Sprintf("  %s: %s", *tag.Key, *tag.Value), nil)
+							if tag.Key != nil && tag.Value != nil {
+								utils.PrintResult(debug, "", "ec2:DescribeInstances", fmt.Sprintf("  %s: %s", *tag.Key, *tag.Value), nil)
+							}
 						}
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
