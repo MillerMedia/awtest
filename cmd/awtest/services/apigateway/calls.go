@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/apigateway"
+	"time"
 )
 
 type ApiWithStages struct {
@@ -113,9 +114,19 @@ var APIGatewayCalls = []types.AWSService{
 			}
 			return allApisWithStages, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "apigateway:RestApis", err)
+				utils.HandleAWSError(debug, "apigateway:RestApis", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "APIGateway",
+						MethodName:  "apigateway:RestApis",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if apisWithStages, ok := output.([]ApiWithStages); ok {
 				for _, apiWithStages := range apisWithStages {
@@ -127,6 +138,15 @@ var APIGatewayCalls = []types.AWSService{
 					utils.PrintResult(debug, "", "apigateway:RestApis", fmt.Sprintf("Found API Gateway: %s", apiName), nil)
 					utils.PrintResult(debug, "", "apigateway:RestApis", fmt.Sprintf("Base URL: %s", apiUrl), nil)
 
+					results = append(results, types.ScanResult{
+						ServiceName:  "APIGateway",
+						MethodName:   "apigateway:RestApis",
+						ResourceType: "rest-api",
+						ResourceName: apiName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
 					// Add this loop to print resources
 					if len(apiWithStages.Resources) > 0 {
 						for _, resource := range apiWithStages.Resources {
@@ -135,6 +155,15 @@ var APIGatewayCalls = []types.AWSService{
 
 							//utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource ID: %s", resourceID), nil)
 							utils.PrintResult(debug, "", "apigateway:GetResources", fmt.Sprintf("Resource Path: %s", resourcePath), nil)
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "APIGateway",
+								MethodName:   "apigateway:GetResources",
+								ResourceType: "resource",
+								ResourceName: resourcePath,
+								Details:      map[string]interface{}{},
+								Timestamp:    time.Now(),
+							})
 
 							// Check if the ResourceMethods map is not nil
 							for method, params := range apiWithStages.MethodParams[resourceID] {
@@ -160,16 +189,34 @@ var APIGatewayCalls = []types.AWSService{
 					} else {
 						for _, stage := range apiWithStages.Stages {
 							utils.PrintResult(debug, "", "apigateway:GetStages", fmt.Sprintf("Found Stage: %s (%s)", *stage.StageName, apiName), nil)
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "APIGateway",
+								MethodName:   "apigateway:GetStages",
+								ResourceType: "stage",
+								ResourceName: *stage.StageName,
+								Details:      map[string]interface{}{},
+								Timestamp:    time.Now(),
+							})
 						}
 					}
 					if len(apiWithStages.Models) > 0 {
 						for _, model := range apiWithStages.Models {
 							utils.PrintResult(debug, "", "apigateway:GetModels", fmt.Sprintf("Found Model: %s (%s)", *model.Name, apiName), nil)
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "APIGateway",
+								MethodName:   "apigateway:GetModels",
+								ResourceType: "model",
+								ResourceName: *model.Name,
+								Details:      map[string]interface{}{},
+								Timestamp:    time.Now(),
+							})
 						}
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -196,9 +243,19 @@ var APIGatewayCalls = []types.AWSService{
 			}
 			return allApiKeys, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "apigateway:GetApiKeys", err)
+				utils.HandleAWSError(debug, "apigateway:GetApiKeys", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "APIGateway",
+						MethodName:  "apigateway:GetApiKeys",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if apiKeys, ok := output.([]*apigateway.ApiKey); ok {
 				if len(apiKeys) == 0 {
@@ -206,10 +263,19 @@ var APIGatewayCalls = []types.AWSService{
 				} else {
 					for _, apiKey := range apiKeys {
 						utils.PrintResult(debug, "", "apigateway:GetApiKeys", fmt.Sprintf("Found API Key: %s", *apiKey.Id), nil)
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "APIGateway",
+							MethodName:   "apigateway:GetApiKeys",
+							ResourceType: "api-key",
+							ResourceName: *apiKey.Id,
+							Details:      map[string]interface{}{},
+							Timestamp:    time.Now(),
+						})
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -236,9 +302,19 @@ var APIGatewayCalls = []types.AWSService{
 			}
 			return allDomainNames, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "apigateway:GetDomainNames", err)
+				utils.HandleAWSError(debug, "apigateway:GetDomainNames", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "APIGateway",
+						MethodName:  "apigateway:GetDomainNames",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if domainNames, ok := output.([]*apigateway.DomainName); ok {
 				if len(domainNames) == 0 {
@@ -246,10 +322,19 @@ var APIGatewayCalls = []types.AWSService{
 				} else {
 					for _, domainName := range domainNames {
 						utils.PrintResult(debug, "", "apigateway:GetDomainNames", fmt.Sprintf("Found Domain Name: %s", *domainName.DomainName), nil)
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "APIGateway",
+							MethodName:   "apigateway:GetDomainNames",
+							ResourceType: "domain-name",
+							ResourceName: *domainName.DomainName,
+							Details:      map[string]interface{}{},
+							Timestamp:    time.Now(),
+						})
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

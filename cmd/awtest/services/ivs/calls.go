@@ -6,6 +6,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ivs"
+	"time"
 )
 
 var IvsCalls = []types.AWSService{
@@ -16,16 +17,35 @@ var IvsCalls = []types.AWSService{
 			input := &ivs.ListChannelsInput{}
 			return svc.ListChannels(input)
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "ivs:ListChannels", err)
+				utils.HandleAWSError(debug, "ivs:ListChannels", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "IVS",
+						MethodName:  "ivs:ListChannels",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if channels, ok := output.(*ivs.ListChannelsOutput); ok {
 				for _, channel := range channels.Channels {
 					utils.PrintResult(debug, "", "ivs:ListChannels", fmt.Sprintf("Channel: %s", *channel.Arn), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "IVS",
+						MethodName:   "ivs:ListChannels",
+						ResourceType: "channel",
+						ResourceName: *channel.Arn,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -36,16 +56,35 @@ var IvsCalls = []types.AWSService{
 			input := &ivs.ListStreamsInput{}
 			return svc.ListStreams(input)
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "ivs:ListStreams", err)
+				utils.HandleAWSError(debug, "ivs:ListStreams", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "IVS",
+						MethodName:  "ivs:ListStreams",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if streamsOutput, ok := output.(*ivs.ListStreamsOutput); ok {
 				for _, stream := range streamsOutput.Streams {
 					utils.PrintResult(debug, "", "ivs:ListStreams", fmt.Sprintf("Stream: %s", *stream.StreamId), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "IVS",
+						MethodName:   "ivs:ListStreams",
+						ResourceType: "stream",
+						ResourceName: *stream.StreamId,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -56,16 +95,35 @@ var IvsCalls = []types.AWSService{
 			input := &ivs.ListStreamKeysInput{}
 			return svc.ListStreamKeys(input)
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "ivs:ListStreamKeys", err)
+				utils.HandleAWSError(debug, "ivs:ListStreamKeys", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "IVS",
+						MethodName:  "ivs:ListStreamKeys",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if streamKeysOutput, ok := output.(*ivs.ListStreamKeysOutput); ok {
 				for _, streamKey := range streamKeysOutput.StreamKeys {
 					utils.PrintResult(debug, "", "ivs:ListStreamKeys", fmt.Sprintf("StreamKey: %s", *streamKey.Arn), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "IVS",
+						MethodName:   "ivs:ListStreamKeys",
+						ResourceType: "stream-key",
+						ResourceName: *streamKey.Arn,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

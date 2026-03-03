@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/appsync"
+	"time"
 )
 
 var AppSyncCalls = []types.AWSService{
@@ -33,16 +34,36 @@ var AppSyncCalls = []types.AWSService{
 			}
 			return allApis, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "appsync:ListGraphqlApis", err)
+				utils.HandleAWSError(debug, "appsync:ListGraphqlApis", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "AppSync",
+						MethodName:  "appsync:ListGraphqlApis",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if apis, ok := output.([]*appsync.GraphqlApi); ok {
 				for _, api := range apis {
+					results = append(results, types.ScanResult{
+						ServiceName:  "AppSync",
+						MethodName:   "appsync:ListGraphqlApis",
+						ResourceType: "graphql-api",
+						ResourceName: *api.Name,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
 					utils.PrintResult(debug, "", "appsync:ListGraphqlApis", fmt.Sprintf("Found AppSync API: %s", *api.Name), nil)
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

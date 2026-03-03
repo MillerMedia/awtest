@@ -6,6 +6,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"time"
 )
 
 var GlueCalls = []types.AWSService{
@@ -16,16 +17,35 @@ var GlueCalls = []types.AWSService{
 			input := &glue.ListWorkflowsInput{}
 			return svc.ListWorkflows(input)
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "glue:ListWorkflows", err)
+				utils.HandleAWSError(debug, "glue:ListWorkflows", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "Glue",
+						MethodName:  "glue:ListWorkflows",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if workflows, ok := output.(*glue.ListWorkflowsOutput); ok {
 				for _, workflowName := range workflows.Workflows {
-					utils.PrintResult(debug, "", "glue:ListWorkflows", fmt.Sprintf("Workflow: %s", workflowName), nil)
+					utils.PrintResult(debug, "", "glue:ListWorkflows", fmt.Sprintf("Workflow: %s", *workflowName), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "Glue",
+						MethodName:   "glue:ListWorkflows",
+						ResourceType: "workflow",
+						ResourceName: *workflowName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -36,16 +56,35 @@ var GlueCalls = []types.AWSService{
 			input := &glue.ListJobsInput{}
 			return svc.ListJobs(input)
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "glue:ListJobs", err)
+				utils.HandleAWSError(debug, "glue:ListJobs", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "Glue",
+						MethodName:  "glue:ListJobs",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if jobs, ok := output.(*glue.ListJobsOutput); ok {
 				for _, job := range jobs.JobNames {
 					utils.PrintResult(debug, "", "glue:ListJobs", fmt.Sprintf("Job: %s", *job), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "Glue",
+						MethodName:   "glue:ListJobs",
+						ResourceType: "job",
+						ResourceName: *job,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

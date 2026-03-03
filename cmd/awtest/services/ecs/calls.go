@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"time"
 )
 
 var ECSCalls = []types.AWSService{
@@ -43,9 +44,19 @@ var ECSCalls = []types.AWSService{
 			}
 			return allClusters, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "ecs:ListClusters", err)
+				utils.HandleAWSError(debug, "ecs:ListClusters", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "ECS",
+						MethodName:  "ecs:ListClusters",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if clusters, ok := output.([]*ecs.Cluster); ok {
 				if len(clusters) == 0 {
@@ -63,12 +74,25 @@ var ECSCalls = []types.AWSService{
 						utils.PrintResult(debug, "", "ecs:ListClusters", fmt.Sprintf("Running Tasks: %d", runningTasks), nil)
 						utils.PrintResult(debug, "", "ecs:ListClusters", fmt.Sprintf("Pending Tasks: %d", pendingTasks), nil)
 						utils.PrintResult(debug, "", "ecs:ListClusters", fmt.Sprintf("Active Services: %d", activeServices), nil)
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "ECS",
+							MethodName:   "ecs:ListClusters",
+							ResourceType: "cluster",
+							ResourceName: clusterName,
+							Details: map[string]interface{}{
+								"status":          status,
+								"running_tasks":   runningTasks,
+								"pending_tasks":   pendingTasks,
+								"active_services": activeServices,
+							},
+							Timestamp: time.Now(),
+						})
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
 }
-

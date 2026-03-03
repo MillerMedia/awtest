@@ -95,9 +95,7 @@ var S3Calls = []types.AWSService{
 								Timestamp:    time.Now(),
 							})
 						} else {
-							countStr := fmt.Sprintf("%d", objCount)
 							if objCount >= 10000 {
-								countStr = "10000+"
 								utils.PrintResult(debug, "", "s3:ListObjects", fmt.Sprintf("S3 Bucket: %s | 10000+ objects", utils.ColorizeItem(bucketName)), nil)
 							} else {
 								utils.PrintResult(debug, "", "s3:ListObjects", fmt.Sprintf("S3 Bucket: %s | %d objects", utils.ColorizeItem(bucketName), objCount), nil)

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
+	"time"
 )
 
 var CognitoIdentityCalls = []types.AWSService{
@@ -23,16 +24,36 @@ var CognitoIdentityCalls = []types.AWSService{
 			}
 			return output.IdentityPools, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "cognitoidentity:ListIdentityPools", err)
+				utils.HandleAWSError(debug, "cognitoidentity:ListIdentityPools", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "CognitoIdentity",
+						MethodName:  "cognitoidentity:ListIdentityPools",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
+
 			if identityPools, ok := output.([]*cognitoidentity.IdentityPoolShortDescription); ok {
 				for _, pool := range identityPools {
+					results = append(results, types.ScanResult{
+						ServiceName:  "CognitoIdentity",
+						MethodName:   "cognitoidentity:ListIdentityPools",
+						ResourceType: "identity-pool",
+						ResourceName: *pool.IdentityPoolName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
 					utils.PrintResult(debug, "", "cognitoidentity:ListIdentityPools", fmt.Sprintf("Found Identity Pool: %s (%s)", *pool.IdentityPoolName, *pool.IdentityPoolId), nil)
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

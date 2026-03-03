@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudfront"
+	"time"
 )
 
 type DistributionWithOrigins struct {
@@ -48,9 +49,19 @@ var CloudFrontCalls = []types.AWSService{
 			}
 			return allDistributionsWithOrigins, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "cloudfront:ListDistributions", err)
+				utils.HandleAWSError(debug, "cloudfront:ListDistributions", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "CloudFront",
+						MethodName:  "cloudfront:ListDistributions",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 
 			if distributionsWithOrigins, ok := output.([]DistributionWithOrigins); ok {
@@ -59,14 +70,32 @@ var CloudFrontCalls = []types.AWSService{
 					distributionID := *distributionWithOrigins.Distribution.Id
 					utils.PrintResult(debug, "", "cloudfront:ListDistributions", fmt.Sprintf("Found Distribution: %s", distributionID), nil)
 
+					results = append(results, types.ScanResult{
+						ServiceName:  "CloudFront",
+						MethodName:   "cloudfront:ListDistributions",
+						ResourceType: "distribution",
+						ResourceName: distributionID,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
+
 					if len(distributionWithOrigins.Origins) > 0 {
 						for _, origin := range distributionWithOrigins.Origins {
 							utils.PrintResult(debug, "", "cloudfront:ListOrigins", fmt.Sprintf("Found Origin: %s (%s)", *origin.Id, distributionID), nil)
+
+							results = append(results, types.ScanResult{
+								ServiceName:  "CloudFront",
+								MethodName:   "cloudfront:ListOrigins",
+								ResourceType: "origin",
+								ResourceName: *origin.Id,
+								Details:      map[string]interface{}{},
+								Timestamp:    time.Now(),
+							})
 						}
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},

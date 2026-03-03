@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"time"
 )
 
 type LogGroupWithStreams struct {
@@ -31,16 +32,35 @@ var CloudwatchCalls = []types.AWSService{
 			}
 			return allAlarms, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "cloudwatch:DescribeAlarms", err)
+				utils.HandleAWSError(debug, "cloudwatch:DescribeAlarms", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "CloudWatch",
+						MethodName:  "cloudwatch:DescribeAlarms",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if alarms, ok := output.([]*cloudwatch.MetricAlarm); ok {
 				for _, alarm := range alarms {
 					utils.PrintResult(debug, "", "cloudwatch:DescribeAlarms", fmt.Sprintf("CloudWatch alarm: %s", utils.ColorizeItem(*alarm.AlarmName)), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "CloudWatch",
+						MethodName:   "cloudwatch:DescribeAlarms",
+						ResourceType: "alarm",
+						ResourceName: *alarm.AlarmName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -91,9 +111,19 @@ var CloudwatchCalls = []types.AWSService{
 
 			return allLogGroupsWithStreams, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "cloudwatchlogs:DescribeLogGroupsAndStreams", err)
+				utils.HandleAWSError(debug, "cloudwatchlogs:DescribeLogGroupsAndStreams", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "CloudWatchLogs",
+						MethodName:  "cloudwatchlogs:DescribeLogGroupsAndStreams",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if logGroupsWithStreams, ok := output.([]*LogGroupWithStreams); ok {
 				if len(logGroupsWithStreams) == 0 {
@@ -103,11 +133,29 @@ var CloudwatchCalls = []types.AWSService{
 						// Print the Log Group
 						utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", fmt.Sprintf("Found Log Group: %s", *lgws.LogGroup.LogGroupName), nil)
 
+						results = append(results, types.ScanResult{
+							ServiceName:  "CloudWatchLogs",
+							MethodName:   "cloudwatchlogs:DescribeLogGroupsAndStreams",
+							ResourceType: "log-group",
+							ResourceName: *lgws.LogGroup.LogGroupName,
+							Details:      map[string]interface{}{},
+							Timestamp:    time.Now(),
+						})
+
 						// Check if there are any Log Streams
 						if len(lgws.LogStreams) > 0 {
 							utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", fmt.Sprintf("  Log Streams for %s:", *lgws.LogGroup.LogGroupName), nil)
 							for _, logStream := range lgws.LogStreams {
 								utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", fmt.Sprintf("    - Log Stream: %s", *logStream.LogStreamName), nil)
+
+								results = append(results, types.ScanResult{
+									ServiceName:  "CloudWatchLogs",
+									MethodName:   "cloudwatchlogs:DescribeLogGroupsAndStreams",
+									ResourceType: "log-stream",
+									ResourceName: *logStream.LogStreamName,
+									Details:      map[string]interface{}{},
+									Timestamp:    time.Now(),
+								})
 							}
 						} else {
 							utils.PrintResult(debug, "", "cloudwatchlogs:DescribeLogGroupsAndStreams", "  No log streams found or access denied.", nil)
@@ -115,7 +163,7 @@ var CloudwatchCalls = []types.AWSService{
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
@@ -135,16 +183,35 @@ var CloudwatchCalls = []types.AWSService{
 			}
 			return allMetrics, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "cloudwatchlogs:ListMetrics", err)
+				utils.HandleAWSError(debug, "cloudwatchlogs:ListMetrics", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "CloudWatch",
+						MethodName:  "cloudwatchlogs:ListMetrics",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if metrics, ok := output.([]*cloudwatch.Metric); ok {
 				for _, metric := range metrics {
 					utils.PrintResult(debug, "", "cloudwatchlogs:ListMetrics", fmt.Sprintf("Found Metric: %s", *metric.MetricName), nil)
+
+					results = append(results, types.ScanResult{
+						ServiceName:  "CloudWatch",
+						MethodName:   "cloudwatchlogs:ListMetrics",
+						ResourceType: "metric",
+						ResourceName: *metric.MetricName,
+						Details:      map[string]interface{}{},
+						Timestamp:    time.Now(),
+					})
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
