@@ -114,7 +114,7 @@ func TestJSONFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "nil details serialized correctly",
+			name: "nil details serialized as empty object",
 			results: []types.ScanResult{
 				{ServiceName: "Lambda", Timestamp: fixedTime},
 			},
@@ -124,8 +124,11 @@ func TestJSONFormatter_Format(t *testing.T) {
 				if err := json.Unmarshal([]byte(output), &parsed); err != nil {
 					t.Fatalf("invalid JSON: %v", err)
 				}
-				if parsed[0].Details != nil {
-					t.Error("nil details should remain nil")
+				if parsed[0].Details == nil {
+					t.Error("nil details should serialize as empty object, not null")
+				}
+				if len(parsed[0].Details) != 0 {
+					t.Errorf("expected empty details map, got %v", parsed[0].Details)
 				}
 			},
 		},
@@ -209,4 +212,65 @@ func TestNewJSONFormatter(t *testing.T) {
 // Test that JSONFormatter satisfies OutputFormatter interface
 func TestJSONFormatter_ImplementsInterface(t *testing.T) {
 	var _ OutputFormatter = (*JSONFormatter)(nil)
+}
+
+func TestJSONFormatter_CompactOutput(t *testing.T) {
+	formatter := NewJSONFormatter()
+	results := []types.ScanResult{
+		{
+			ServiceName: "S3",
+			MethodName:  "s3:ListBuckets",
+			Timestamp:   time.Date(2026, 3, 2, 14, 30, 0, 0, time.UTC),
+		},
+	}
+	output, err := formatter.Format(results)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Contains(output, "\n") {
+		t.Error("compact JSON should not contain newlines")
+	}
+}
+
+func TestJSONFormatter_ResilientSerialization(t *testing.T) {
+	formatter := NewJSONFormatter()
+	fixedTime := time.Date(2026, 3, 2, 14, 30, 0, 0, time.UTC)
+
+	// Details with an unserializable value (channel)
+	badDetails := map[string]interface{}{
+		"ch": make(chan int),
+	}
+	results := []types.ScanResult{
+		{ServiceName: "S3", Details: map[string]interface{}{"region": "us-east-1"}, Timestamp: fixedTime},
+		{ServiceName: "BadService", Details: badDetails, Timestamp: fixedTime},
+		{ServiceName: "EC2", Details: map[string]interface{}{"state": "running"}, Timestamp: fixedTime},
+	}
+
+	output, err := formatter.Format(results)
+	if err != nil {
+		t.Fatalf("resilient formatter should not return error, got: %v", err)
+	}
+
+	var parsed []jsonScanResult
+	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
+		t.Fatalf("output should be valid JSON: %v", err)
+	}
+	if len(parsed) != 3 {
+		t.Fatalf("expected 3 results (including failed one), got %d", len(parsed))
+	}
+	// Good results should have their details intact
+	if parsed[0].Details["region"] != "us-east-1" {
+		t.Error("first result details should be preserved")
+	}
+	// Bad result should have empty details and an error noting the serialization failure
+	if len(parsed[1].Details) != 0 {
+		t.Error("bad result should have empty details")
+	}
+	if !strings.Contains(parsed[1].Error, "serialization error") {
+		t.Errorf("bad result should note serialization error, got: %s", parsed[1].Error)
+	}
+	// Third result should be unaffected
+	if parsed[2].Details["state"] != "running" {
+		t.Error("third result details should be preserved")
+	}
 }

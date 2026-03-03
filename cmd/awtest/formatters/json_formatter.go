@@ -3,6 +3,7 @@ package formatters
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 )
@@ -27,7 +28,7 @@ func NewJSONFormatter() *JSONFormatter {
 	return &JSONFormatter{}
 }
 
-// Format converts scan results to a pretty-printed JSON string.
+// Format converts scan results to compact JSON for SIEM and machine consumption.
 func (f *JSONFormatter) Format(results []types.ScanResult) (string, error) {
 	jsonResults := make([]jsonScanResult, 0, len(results))
 	for _, r := range results {
@@ -36,16 +37,27 @@ func (f *JSONFormatter) Format(results []types.ScanResult) (string, error) {
 			MethodName:   r.MethodName,
 			ResourceType: r.ResourceType,
 			ResourceName: r.ResourceName,
-			Details:      r.Details,
-			Timestamp:    r.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
+			Details:      map[string]interface{}{},
+			Timestamp:    r.Timestamp.Format(time.RFC3339),
+		}
+		if r.Details != nil {
+			if _, err := json.Marshal(r.Details); err == nil {
+				jr.Details = r.Details
+			} else {
+				jr.Error = fmt.Sprintf("details serialization error: %v", err)
+			}
 		}
 		if r.Error != nil {
-			jr.Error = r.Error.Error()
+			if jr.Error != "" {
+				jr.Error = r.Error.Error() + "; " + jr.Error
+			} else {
+				jr.Error = r.Error.Error()
+			}
 		}
 		jsonResults = append(jsonResults, jr)
 	}
 
-	data, err := json.MarshalIndent(jsonResults, "", "  ")
+	data, err := json.Marshal(jsonResults)
 	if err != nil {
 		return "", fmt.Errorf("json formatting failed: %w", err)
 	}

@@ -43,7 +43,7 @@ development_status:
   # Epic 1: Output Format System
   epic-1: in-progress
   1-1-formatter-interface-result-collection: in-progress
-  1-2-json-output-formatter: backlog
+  1-2-json-output-formatter: review
   1-3-yaml-output-formatter: backlog
   1-4-csv-output-formatter: backlog
   1-5-table-output-formatter: backlog

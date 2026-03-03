@@ -84,7 +84,7 @@ func HandleAWSError(debug bool, callName string, err error) error {
 			}
 		} else if awsErr.Code() == types.InvalidAccessKeyId || awsErr.Code() == types.InvalidClientTokenId {
 			PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
-			return &types.InvalidKeyError{prettyMsg}
+			return &types.InvalidKeyError{Message: prettyMsg}
 		}
 
 		PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
