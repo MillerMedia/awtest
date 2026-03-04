@@ -44,7 +44,7 @@ development_status:
   epic-1: in-progress
   1-1-formatter-interface-result-collection: done
   1-2-json-output-formatter: done
-  1-3-yaml-output-formatter: review
+  1-3-yaml-output-formatter: done
   1-4-csv-output-formatter: done
   1-5-table-output-formatter: done
   1-6-format-selection-file-output: backlog
