@@ -1,6 +1,6 @@
 # Story 1.5: Table Output Formatter
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
