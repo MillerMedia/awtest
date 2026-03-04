@@ -265,6 +265,50 @@ func TestYAMLFormatter_ImplementsInterface(t *testing.T) {
 	var _ OutputFormatter = (*YAMLFormatter)(nil)
 }
 
+func TestYAMLFormatter_FormatWithSummary(t *testing.T) {
+	formatter := NewYAMLFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceName: "bucket-1", Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:        2,
+		AccessibleServices:   1,
+		AccessDeniedServices: 1,
+		TotalResources:       1,
+		ScanDuration:         5 * time.Second,
+		Timestamp:            fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	// Verify metadata section present
+	if !strings.Contains(output, "metadata:") {
+		t.Error("YAML should contain metadata section")
+	}
+	if !strings.Contains(output, "totalServices: 2") {
+		t.Error("YAML metadata should contain totalServices")
+	}
+	if !strings.Contains(output, "results:") {
+		t.Error("YAML should contain results section")
+	}
+
+	// Parse and verify structure
+	var parsed yamlEnvelope
+	if err := yaml.Unmarshal([]byte(output), &parsed); err != nil {
+		t.Fatalf("invalid YAML: %v", err)
+	}
+	if parsed.Metadata.TotalServices != 2 {
+		t.Errorf("metadata.totalServices = %d, want 2", parsed.Metadata.TotalServices)
+	}
+	if len(parsed.Results) != 1 {
+		t.Errorf("expected 1 result, got %d", len(parsed.Results))
+	}
+}
+
 func TestYAMLFormatter_ResilientSerialization(t *testing.T) {
 	formatter := NewYAMLFormatter()
 	fixedTime := time.Date(2026, 3, 2, 14, 30, 0, 0, time.UTC)

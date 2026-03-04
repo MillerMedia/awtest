@@ -371,6 +371,62 @@ func TestCSVFormatter_ResilientSerialization(t *testing.T) {
 	}
 }
 
+func TestCSVFormatter_FormatWithSummary(t *testing.T) {
+	formatter := NewCSVFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceName: "bucket-1", Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:        2,
+		AccessibleServices:   1,
+		AccessDeniedServices: 1,
+		TotalResources:       1,
+		ScanDuration:         5 * time.Second,
+		Timestamp:            fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	// Verify header comments contain summary info
+	if !strings.Contains(output, "# Scan Summary") {
+		t.Error("CSV should contain summary header comment")
+	}
+	if !strings.Contains(output, "# Total Services: 2") {
+		t.Error("CSV should contain total services in header")
+	}
+	if !strings.Contains(output, "# Accessible: 1") {
+		t.Error("CSV should contain accessible count in header")
+	}
+	if !strings.Contains(output, "# Access Denied: 1") {
+		t.Error("CSV should contain denied count in header")
+	}
+	if !strings.Contains(output, "# Resources Found: 1") {
+		t.Error("CSV should contain resources count in header")
+	}
+
+	// Verify CSV data is still parseable (skip comment lines)
+	lines := strings.Split(output, "\n")
+	var csvLines []string
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "#") {
+			csvLines = append(csvLines, line)
+		}
+	}
+	csvData := strings.Join(csvLines, "\n")
+	reader := csv.NewReader(strings.NewReader(csvData))
+	records, err := reader.ReadAll()
+	if err != nil {
+		t.Fatalf("CSV data should be parseable: %v", err)
+	}
+	if len(records) != 2 { // header + 1 data row
+		t.Errorf("expected 2 CSV rows (header + 1 data), got %d", len(records))
+	}
+}
+
 // parseCSV is a test helper that parses CSV output using csv.Reader.
 func parseCSV(t *testing.T, output string) [][]string {
 	t.Helper()

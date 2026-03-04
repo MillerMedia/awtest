@@ -19,6 +19,10 @@ func (m *mockFormatter) Format(results []types.ScanResult) (string, error) {
 	return m.formatFunc(results)
 }
 
+func (m *mockFormatter) FormatWithSummary(results []types.ScanResult, summary types.ScanSummary) (string, error) {
+	return m.formatFunc(results)
+}
+
 func (m *mockFormatter) FileExtension() string {
 	return m.extension
 }

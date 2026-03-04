@@ -64,6 +64,70 @@ func (f *JSONFormatter) Format(results []types.ScanResult) (string, error) {
 	return string(data), nil
 }
 
+// jsonMetadata is the metadata envelope for JSON output with summary.
+type jsonMetadata struct {
+	Timestamp            string `json:"timestamp"`
+	Duration             string `json:"duration"`
+	TotalServices        int    `json:"totalServices"`
+	AccessibleServices   int    `json:"accessibleServices"`
+	AccessDeniedServices int    `json:"accessDeniedServices"`
+	TotalResources       int    `json:"totalResources"`
+}
+
+// jsonEnvelope wraps results with metadata for structured output.
+type jsonEnvelope struct {
+	Metadata jsonMetadata     `json:"metadata"`
+	Results  []jsonScanResult `json:"results"`
+}
+
+// FormatWithSummary wraps JSON results in a metadata envelope.
+func (f *JSONFormatter) FormatWithSummary(results []types.ScanResult, summary types.ScanSummary) (string, error) {
+	jsonResults := make([]jsonScanResult, 0, len(results))
+	for _, r := range results {
+		jr := jsonScanResult{
+			ServiceName:  r.ServiceName,
+			MethodName:   r.MethodName,
+			ResourceType: r.ResourceType,
+			ResourceName: r.ResourceName,
+			Details:      map[string]interface{}{},
+			Timestamp:    r.Timestamp.Format(time.RFC3339),
+		}
+		if r.Details != nil {
+			if _, err := json.Marshal(r.Details); err == nil {
+				jr.Details = r.Details
+			} else {
+				jr.Error = fmt.Sprintf("details serialization error: %v", err)
+			}
+		}
+		if r.Error != nil {
+			if jr.Error != "" {
+				jr.Error = r.Error.Error() + "; " + jr.Error
+			} else {
+				jr.Error = r.Error.Error()
+			}
+		}
+		jsonResults = append(jsonResults, jr)
+	}
+
+	envelope := jsonEnvelope{
+		Metadata: jsonMetadata{
+			Timestamp:            summary.Timestamp.Format(time.RFC3339),
+			Duration:             summary.ScanDuration.String(),
+			TotalServices:        summary.TotalServices,
+			AccessibleServices:   summary.AccessibleServices,
+			AccessDeniedServices: summary.AccessDeniedServices,
+			TotalResources:       summary.TotalResources,
+		},
+		Results: jsonResults,
+	}
+
+	data, err := json.Marshal(envelope)
+	if err != nil {
+		return "", fmt.Errorf("json formatting failed: %w", err)
+	}
+	return string(data), nil
+}
+
 // FileExtension returns "json" for JSON formatted output.
 func (f *JSONFormatter) FileExtension() string {
 	return "json"

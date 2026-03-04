@@ -78,6 +78,70 @@ func tryMarshalYAML(v interface{}) (errMsg string) {
 	return ""
 }
 
+// yamlMetadata is the metadata section for YAML output with summary.
+type yamlMetadata struct {
+	Timestamp            string `yaml:"timestamp"`
+	Duration             string `yaml:"duration"`
+	TotalServices        int    `yaml:"totalServices"`
+	AccessibleServices   int    `yaml:"accessibleServices"`
+	AccessDeniedServices int    `yaml:"accessDeniedServices"`
+	TotalResources       int    `yaml:"totalResources"`
+}
+
+// yamlEnvelope wraps results with metadata for structured output.
+type yamlEnvelope struct {
+	Metadata yamlMetadata     `yaml:"metadata"`
+	Results  []yamlScanResult `yaml:"results"`
+}
+
+// FormatWithSummary wraps YAML results in a metadata envelope.
+func (f *YAMLFormatter) FormatWithSummary(results []types.ScanResult, summary types.ScanSummary) (string, error) {
+	yamlResults := make([]yamlScanResult, 0, len(results))
+	for _, r := range results {
+		yr := yamlScanResult{
+			ServiceName:  r.ServiceName,
+			MethodName:   r.MethodName,
+			ResourceType: r.ResourceType,
+			ResourceName: r.ResourceName,
+			Details:      map[string]interface{}{},
+			Timestamp:    r.Timestamp.Format(time.RFC3339),
+		}
+		if r.Details != nil {
+			if marshalErr := tryMarshalYAML(r.Details); marshalErr == "" {
+				yr.Details = r.Details
+			} else {
+				yr.Error = fmt.Sprintf("details serialization error: %v", marshalErr)
+			}
+		}
+		if r.Error != nil {
+			if yr.Error != "" {
+				yr.Error = r.Error.Error() + "; " + yr.Error
+			} else {
+				yr.Error = r.Error.Error()
+			}
+		}
+		yamlResults = append(yamlResults, yr)
+	}
+
+	envelope := yamlEnvelope{
+		Metadata: yamlMetadata{
+			Timestamp:            summary.Timestamp.Format(time.RFC3339),
+			Duration:             summary.ScanDuration.String(),
+			TotalServices:        summary.TotalServices,
+			AccessibleServices:   summary.AccessibleServices,
+			AccessDeniedServices: summary.AccessDeniedServices,
+			TotalResources:       summary.TotalResources,
+		},
+		Results: yamlResults,
+	}
+
+	data, err := yaml.Marshal(envelope)
+	if err != nil {
+		return "", fmt.Errorf("yaml formatting failed: %w", err)
+	}
+	return string(data), nil
+}
+
 // FileExtension returns "yaml" for YAML formatted output.
 func (f *YAMLFormatter) FileExtension() string {
 	return "yaml"

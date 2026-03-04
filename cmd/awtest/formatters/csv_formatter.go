@@ -12,6 +12,50 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 )
 
+// FormatWithSummary formats CSV with summary info as header comment rows.
+func (f *CSVFormatter) FormatWithSummary(results []types.ScanResult, summary types.ScanSummary) (string, error) {
+	var buf bytes.Buffer
+
+	// Write summary as comment header
+	fmt.Fprintf(&buf, "# Scan Summary\n")
+	fmt.Fprintf(&buf, "# Timestamp: %s\n", summary.Timestamp.Format(time.RFC3339))
+	fmt.Fprintf(&buf, "# Duration: %s\n", summary.ScanDuration)
+	fmt.Fprintf(&buf, "# Total Services: %d\n", summary.TotalServices)
+	fmt.Fprintf(&buf, "# Accessible: %d\n", summary.AccessibleServices)
+	fmt.Fprintf(&buf, "# Access Denied: %d\n", summary.AccessDeniedServices)
+	fmt.Fprintf(&buf, "# Resources Found: %d\n", summary.TotalResources)
+
+	// Write CSV data
+	writer := csv.NewWriter(&buf)
+	header := []string{"Service", "Method", "ResourceType", "ResourceName", "Details", "Timestamp", "Error"}
+	if err := writer.Write(header); err != nil {
+		return "", fmt.Errorf("csv formatting failed: %w", err)
+	}
+
+	for _, r := range results {
+		details, detailsErr := flattenDetails(r.Details)
+		errStr := formatCSVError(r, detailsErr)
+		record := []string{
+			r.ServiceName,
+			r.MethodName,
+			r.ResourceType,
+			r.ResourceName,
+			details,
+			r.Timestamp.Format(time.RFC3339),
+			errStr,
+		}
+		if err := writer.Write(record); err != nil {
+			return "", fmt.Errorf("csv formatting failed: %w", err)
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return "", fmt.Errorf("csv formatting failed: %w", err)
+	}
+	return buf.String(), nil
+}
+
 // CSVFormatter formats scan results as CSV output.
 type CSVFormatter struct{}
 

@@ -3,28 +3,22 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/MillerMedia/awtest/cmd/awtest/formatters"
 	"github.com/MillerMedia/awtest/cmd/awtest/services"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"os"
-	"strings"
 )
 
 const Version = "v0.3.0"
 
 func main() {
-	fmt.Println("     /\\ \\        / /__   __|      | |")
-	fmt.Println("    /  \\ \\  /\\  / /   | | ___  ___| |_")
-	fmt.Println("   / /\\ \\ \\/  \\/ /    | |/ _ \\/ __| __|")
-	fmt.Println("  / ____ \\  /\\  /     | |  __/\\__ \\ |_")
-	fmt.Println(" /_/    \\_\\/  \\/      |_|\\___||___/\\__|")
-	fmt.Println("----------------------------------------")
-	fmt.Println("Version:", Version)
-	fmt.Println("----------------------------------------")
-
 	awsAccessKeyID := flag.String("access-key-id", "", "AWS Access Key ID")
 	awsSecretAccessKey := flag.String("secret-access-key", "", "AWS Secret Access Key")
 	awsSessionToken := flag.String("session-token", "", "AWS Session Token (optional)")
@@ -34,9 +28,26 @@ func main() {
 	awsSecretAccessKeyAbbr := flag.String("sak", "", "Abbreviated AWS Secret Access Key")
 	awsSessionTokenAbbr := flag.String("st", "", "Abbreviated AWS Session Token")
 
+	outputFormat := flag.String("format", "text", "Output format: text, json, yaml, csv, table")
+	outputFile := flag.String("output-file", "", "Write output to file instead of stdout")
+	quiet := flag.Bool("quiet", false, "Suppress informational messages, show only findings")
+
 	debug := flag.Bool("debug", false, "Enable debug mode")
 
 	flag.Parse()
+
+	utils.Quiet = *quiet
+
+	if !*quiet {
+		fmt.Println("     /\\ \\        / /__   __|      | |")
+		fmt.Println("    /  \\ \\  /\\  / /   | | ___  ___| |_")
+		fmt.Println("   / /\\ \\ \\/  \\/ /    | |/ _ \\/ __| __|")
+		fmt.Println("  / ____ \\  /\\  /     | |  __/\\__ \\ |_")
+		fmt.Println(" /_/    \\_\\/  \\/      |_|\\___||___/\\__|")
+		fmt.Println("----------------------------------------")
+		fmt.Println("Version:", Version)
+		fmt.Println("----------------------------------------")
+	}
 
 	if *awsAccessKeyIDAbbr != "" {
 		awsAccessKeyID = awsAccessKeyIDAbbr
@@ -127,14 +138,86 @@ func main() {
 		fmt.Println("-----------------------------")
 	}
 
+	// Validate format flag early
+	formatter, err := getFormatter(*outputFormat)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	startTime := time.Now()
+
 	var results []types.ScanResult
 	for _, service := range services.AllServices() {
+		if !*quiet {
+			fmt.Fprintf(os.Stderr, "Scanning %s...\n", service.Name)
+		}
 		output, err := service.Call(sess)
 		serviceResults := service.Process(output, err, *debug)
 		results = append(results, serviceResults...)
 	}
 
-	// NOTE: Currently maintaining backward compatibility by printing results within Process methods
-	// In future stories, this will be replaced with formatter-based output
-	// The results slice is collected but not yet used for output
+	summary := types.GenerateSummary(results, startTime)
+
+	// For text format to stdout, results are already printed by Process() methods
+	// Unless quiet mode is set — then we need to use the formatter
+	if *outputFormat == "text" && *outputFile == "" && !*quiet {
+		printTextSummary(summary)
+		return
+	}
+
+	// For all other cases, use formatter
+	// Quiet mode suppresses summary (AC6) — use Format() instead of FormatWithSummary()
+	var formatted string
+	if *quiet {
+		formatted, err = formatter.Format(results)
+	} else {
+		formatted, err = formatter.FormatWithSummary(results, summary)
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error formatting output: %v\n", err)
+		os.Exit(1)
+	}
+
+	if *outputFile != "" {
+		if err := os.WriteFile(*outputFile, []byte(formatted), 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing output file: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "Output written to %s\n", *outputFile)
+	} else {
+		fmt.Print(formatted)
+	}
+}
+
+// printTextSummary prints a scan summary to stderr for the default text+stdout path.
+func printTextSummary(summary types.ScanSummary) {
+	fmt.Fprintf(os.Stderr, "========================================\n")
+	fmt.Fprintf(os.Stderr, "Scan Summary\n")
+	fmt.Fprintf(os.Stderr, "========================================\n")
+	fmt.Fprintf(os.Stderr, "Timestamp:          %s\n", summary.Timestamp.Format(time.RFC3339))
+	fmt.Fprintf(os.Stderr, "Duration:           %s\n", summary.ScanDuration)
+	fmt.Fprintf(os.Stderr, "Total Services:     %d\n", summary.TotalServices)
+	fmt.Fprintf(os.Stderr, "Accessible:         %d\n", summary.AccessibleServices)
+	fmt.Fprintf(os.Stderr, "Access Denied:      %d\n", summary.AccessDeniedServices)
+	fmt.Fprintf(os.Stderr, "Resources Found:    %d\n", summary.TotalResources)
+	fmt.Fprintf(os.Stderr, "========================================\n")
+}
+
+// getFormatter returns the appropriate OutputFormatter for the given format string.
+func getFormatter(format string) (formatters.OutputFormatter, error) {
+	switch strings.ToLower(format) {
+	case "text":
+		return formatters.NewTextFormatter(), nil
+	case "json":
+		return formatters.NewJSONFormatter(), nil
+	case "yaml":
+		return formatters.NewYAMLFormatter(), nil
+	case "csv":
+		return formatters.NewCSVFormatter(), nil
+	case "table":
+		return formatters.NewTableFormatter(), nil
+	default:
+		return nil, fmt.Errorf("unsupported format: %s (supported: text, json, yaml, csv, table)", format)
+	}
 }

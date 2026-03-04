@@ -10,6 +10,11 @@ type OutputFormatter interface {
 	// Returns an error if formatting fails.
 	Format(results []types.ScanResult) (string, error)
 
+	// FormatWithSummary formats scan results with an accompanying scan summary.
+	// For JSON/YAML, wraps results in a metadata envelope.
+	// For CSV/Table/Text, appends summary after the data.
+	FormatWithSummary(results []types.ScanResult, summary types.ScanSummary) (string, error)
+
 	// FileExtension returns the file extension for this format (e.g., "json", "yaml", "txt").
 	FileExtension() string
 }

@@ -218,6 +218,45 @@ func TestTableFormatter_Format(t *testing.T) {
 	}
 }
 
+func TestTableFormatter_FormatWithSummary(t *testing.T) {
+	formatter := NewTableFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceName: "bucket-1", Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:        2,
+		AccessibleServices:   1,
+		AccessDeniedServices: 1,
+		TotalResources:       1,
+		ScanDuration:         5 * time.Second,
+		Timestamp:            fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	// Verify table content present
+	if !strings.Contains(output, "S3") {
+		t.Error("table should contain service name")
+	}
+	// Verify summary section present
+	if !strings.Contains(output, "Scan Summary") {
+		t.Error("table output should contain Scan Summary section")
+	}
+	if !strings.Contains(output, "Total Services:     2") {
+		t.Error("table output should contain total services")
+	}
+	if !strings.Contains(output, "Accessible:         1") {
+		t.Error("table output should contain accessible count")
+	}
+	if !strings.Contains(output, "Resources Found:    1") {
+		t.Error("table output should contain resources count")
+	}
+}
+
 func TestTableFormatter_FileExtension(t *testing.T) {
 	formatter := NewTableFormatter()
 	if ext := formatter.FileExtension(); ext != "txt" {

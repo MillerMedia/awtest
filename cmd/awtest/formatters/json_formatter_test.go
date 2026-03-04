@@ -232,6 +232,74 @@ func TestJSONFormatter_CompactOutput(t *testing.T) {
 	}
 }
 
+func TestJSONFormatter_FormatWithSummary(t *testing.T) {
+	formatter := NewJSONFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceName: "bucket-1", Timestamp: fixedTime},
+		{ServiceName: "EC2", Error: errors.New("denied"), Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:        2,
+		AccessibleServices:   1,
+		AccessDeniedServices: 1,
+		TotalResources:       1,
+		ScanDuration:         5 * time.Second,
+		Timestamp:            fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	// Parse as JSON
+	var parsed map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	// Verify metadata key exists
+	if _, ok := parsed["metadata"]; !ok {
+		t.Error("JSON envelope should contain 'metadata' key")
+	}
+	// Verify results key exists
+	if _, ok := parsed["results"]; !ok {
+		t.Error("JSON envelope should contain 'results' key")
+	}
+
+	// Parse metadata
+	var metadata struct {
+		Timestamp            string `json:"timestamp"`
+		Duration             string `json:"duration"`
+		TotalServices        int    `json:"totalServices"`
+		AccessibleServices   int    `json:"accessibleServices"`
+		AccessDeniedServices int    `json:"accessDeniedServices"`
+		TotalResources       int    `json:"totalResources"`
+	}
+	if err := json.Unmarshal(parsed["metadata"], &metadata); err != nil {
+		t.Fatalf("invalid metadata JSON: %v", err)
+	}
+	if metadata.TotalServices != 2 {
+		t.Errorf("metadata.totalServices = %d, want 2", metadata.TotalServices)
+	}
+	if metadata.AccessibleServices != 1 {
+		t.Errorf("metadata.accessibleServices = %d, want 1", metadata.AccessibleServices)
+	}
+	if metadata.TotalResources != 1 {
+		t.Errorf("metadata.totalResources = %d, want 1", metadata.TotalResources)
+	}
+
+	// Verify results array
+	var resultsParsed []jsonScanResult
+	if err := json.Unmarshal(parsed["results"], &resultsParsed); err != nil {
+		t.Fatalf("invalid results JSON: %v", err)
+	}
+	if len(resultsParsed) != 2 {
+		t.Errorf("expected 2 results, got %d", len(resultsParsed))
+	}
+}
+
 func TestJSONFormatter_ResilientSerialization(t *testing.T) {
 	formatter := NewJSONFormatter()
 	fixedTime := time.Date(2026, 3, 2, 14, 30, 0, 0, time.UTC)

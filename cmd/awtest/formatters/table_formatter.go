@@ -2,6 +2,7 @@ package formatters
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
@@ -57,6 +58,29 @@ func (f *TableFormatter) Format(results []types.ScanResult) (string, error) {
 	}
 
 	table.Render()
+	return buf.String(), nil
+}
+
+// FormatWithSummary formats results as a table with a summary section appended.
+func (f *TableFormatter) FormatWithSummary(results []types.ScanResult, summary types.ScanSummary) (string, error) {
+	tableOutput, err := f.Format(results)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString(tableOutput)
+	fmt.Fprintf(&buf, "\n========================================\n")
+	fmt.Fprintf(&buf, "Scan Summary\n")
+	fmt.Fprintf(&buf, "========================================\n")
+	fmt.Fprintf(&buf, "Timestamp:          %s\n", summary.Timestamp.Format(time.RFC3339))
+	fmt.Fprintf(&buf, "Duration:           %s\n", summary.ScanDuration)
+	fmt.Fprintf(&buf, "Total Services:     %d\n", summary.TotalServices)
+	fmt.Fprintf(&buf, "Accessible:         %d\n", summary.AccessibleServices)
+	fmt.Fprintf(&buf, "Access Denied:      %d\n", summary.AccessDeniedServices)
+	fmt.Fprintf(&buf, "Resources Found:    %d\n", summary.TotalResources)
+	fmt.Fprintf(&buf, "========================================\n")
+
 	return buf.String(), nil
 }
 
