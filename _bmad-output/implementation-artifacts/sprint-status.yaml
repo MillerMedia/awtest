@@ -55,8 +55,8 @@ development_status:
   epic-2: in-progress
   2-1-certificate-manager-acm-service-enumeration: done
   2-2-cognito-user-pools-service-enumeration: done
-  2-3-aws-config-service-enumeration: backlog
-  2-4-efs-elastic-file-system-service-enumeration: backlog
+  2-3-aws-config-service-enumeration: review
+  2-4-efs-elastic-file-system-service-enumeration: review
   2-5-eks-elastic-kubernetes-service-enumeration: backlog
   2-6-elasticache-clusters-service-enumeration: backlog
   2-7-fargate-tasks-service-enumeration: backlog
