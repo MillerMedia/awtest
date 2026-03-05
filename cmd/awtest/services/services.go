@@ -19,6 +19,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ecs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/efs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eks"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticache"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticbeanstalk"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eventbridge"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/glacier"
@@ -66,6 +67,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ecs.ECSCalls...)
 	allServices = append(allServices, efs.EfsCalls...)
 	allServices = append(allServices, eks.EKSCalls...)
+	allServices = append(allServices, elasticache.ElastiCacheCalls...)
 	allServices = append(allServices, elasticbeanstalk.ElasticBeanstalkCalls...)
 	allServices = append(allServices, eventbridge.EventbridgeCalls...)
 	allServices = append(allServices, glacier.GlacierCalls...)

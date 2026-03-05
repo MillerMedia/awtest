@@ -58,7 +58,7 @@ development_status:
   2-3-aws-config-service-enumeration: done
   2-4-efs-elastic-file-system-service-enumeration: done
   2-5-eks-elastic-kubernetes-service-enumeration: done
-  2-6-elasticache-clusters-service-enumeration: backlog
+  2-6-elasticache-clusters-service-enumeration: done
   2-7-fargate-tasks-service-enumeration: backlog
   2-8-redshift-clusters-service-enumeration: backlog
   2-9-step-functions-state-machines-enumeration: backlog
