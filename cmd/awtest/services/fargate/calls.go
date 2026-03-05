@@ -15,6 +15,8 @@ var FargateCalls = []types.AWSService{
 		Name: "ecs:ListFargateTasks",
 		Call: func(sess *session.Session) (interface{}, error) {
 			var allTasks []*ecs.Task
+			var lastErr error
+			anyRegionSucceeded := false
 			for _, region := range types.Regions {
 				regionSess := sess.Copy(&aws.Config{Region: aws.String(region)})
 				svc := ecs.New(regionSess)
@@ -22,9 +24,12 @@ var FargateCalls = []types.AWSService{
 				// Step 1: List all clusters in this region
 				var clusterArns []*string
 				listClustersInput := &ecs.ListClustersInput{}
+				regionFailed := false
 				for {
 					clustersOutput, err := svc.ListClusters(listClustersInput)
 					if err != nil {
+						lastErr = err
+						regionFailed = true
 						break
 					}
 					clusterArns = append(clusterArns, clustersOutput.ClusterArns...)
@@ -33,6 +38,10 @@ var FargateCalls = []types.AWSService{
 					}
 					listClustersInput.NextToken = clustersOutput.NextToken
 				}
+				if regionFailed {
+					continue
+				}
+				anyRegionSucceeded = true
 
 				// Step 2: For each cluster, list Fargate tasks
 				for _, clusterArn := range clusterArns {
@@ -69,6 +78,9 @@ var FargateCalls = []types.AWSService{
 						allTasks = append(allTasks, describeOutput.Tasks...)
 					}
 				}
+			}
+			if !anyRegionSucceeded && lastErr != nil {
+				return nil, lastErr
 			}
 			return allTasks, nil
 		},

@@ -15,15 +15,20 @@ var ElastiCacheCalls = []types.AWSService{
 		Name: "elasticache:DescribeCacheClusters",
 		Call: func(sess *session.Session) (interface{}, error) {
 			var allClusters []*elasticache.CacheCluster
+			var lastErr error
+			anyRegionSucceeded := false
 			for _, region := range types.Regions {
 				regionSess := sess.Copy(&aws.Config{Region: aws.String(region)})
 				svc := elasticache.New(regionSess)
 				input := &elasticache.DescribeCacheClustersInput{
 					ShowCacheNodeInfo: aws.Bool(true),
 				}
+				regionFailed := false
 				for {
 					output, err := svc.DescribeCacheClusters(input)
 					if err != nil {
+						lastErr = err
+						regionFailed = true
 						break
 					}
 					allClusters = append(allClusters, output.CacheClusters...)
@@ -32,6 +37,12 @@ var ElastiCacheCalls = []types.AWSService{
 					}
 					input.Marker = output.Marker
 				}
+				if !regionFailed {
+					anyRegionSucceeded = true
+				}
+			}
+			if !anyRegionSucceeded && lastErr != nil {
+				return nil, lastErr
 			}
 			return allClusters, nil
 		},
