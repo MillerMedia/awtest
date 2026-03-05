@@ -52,9 +52,9 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: AWS Service Coverage Expansion
-  epic-2: backlog
-  2-1-certificate-manager-acm-service-enumeration: backlog
-  2-2-cognito-user-pools-service-enumeration: backlog
+  epic-2: in-progress
+  2-1-certificate-manager-acm-service-enumeration: done
+  2-2-cognito-user-pools-service-enumeration: done
   2-3-aws-config-service-enumeration: backlog
   2-4-efs-elastic-file-system-service-enumeration: backlog
   2-5-eks-elastic-kubernetes-service-enumeration: backlog
