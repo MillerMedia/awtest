@@ -1,6 +1,6 @@
 # Story 2.3: AWS Config Service Enumeration
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

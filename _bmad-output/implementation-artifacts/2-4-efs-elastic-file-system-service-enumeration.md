@@ -1,6 +1,6 @@
 # Story 2.4: EFS (Elastic File System) Service Enumeration
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
