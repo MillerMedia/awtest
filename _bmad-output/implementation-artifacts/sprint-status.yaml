@@ -63,7 +63,7 @@ development_status:
   2-8-redshift-clusters-service-enumeration: done
   2-9-step-functions-state-machines-enumeration: done
   2-10-systems-manager-ssm-parameters-enumeration: done
-  2-11-vpc-infrastructure-service-enumeration: review
+  2-11-vpc-infrastructure-service-enumeration: done
   epic-2-retrospective: optional
 
   # Epic 3: Scan Configuration & Control
