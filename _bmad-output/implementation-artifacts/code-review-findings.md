@@ -1,16 +1,16 @@
 **🔥 CODE REVIEW FINDINGS, Kn0ck0ut!**
 
-**Story:** _bmad-output/implementation-artifacts/2-10-systems-manager-ssm-parameters-enumeration.md
+**Story:** _bmad-output/implementation-artifacts/2-11-vpc-infrastructure-service-enumeration.md
 **Git vs Story Discrepancies:** 0 found
-**Issues Found:** 0 High, 0 Medium, 2 Low
+**Issues Found:** 0 High, 1 Medium, 2 Low
+
+## 🟡 MEDIUM ISSUES
+- **Silent failure of Subnet/SG enumeration**: In `Call()`, if `DescribeSubnets` or `DescribeSecurityGroups` fails, the error is silently ignored (break loop). This results in an empty list of subnets/SGs, which is misleading (user thinks there are none, but actually the call failed).
+  - *Fix*: Add `PartialErrors []error` to `VPCInfrastructure` struct. Collect errors in `Call()`. In `Process()`, convert these errors into `ScanResult` entries so the user is alerted to the partial failure.
 
 ## 🟢 LOW ISSUES
-- **Import Order**: In `cmd/awtest/services/services.go`, the `sts` import is placed after `systemsmanager`. Alphabetically, `sts` should come before `systemsmanager`.
-- **Nil Slice Return**: In `cmd/awtest/services/systemsmanager/calls.go`, `Process` returns a `nil` slice when no parameters are found. While functionally equivalent to an empty slice in Go, returning an explicit empty slice `[]types.ScanResult{}` is preferred for clarity.
+- **Process function complexity**: The `Process` function is 170+ lines long and handles three distinct resource types. It violates Single Responsibility Principle.
+  - *Fix*: Refactor into `processVPCs`, `processSubnets`, and `processSecurityGroups` helper functions.
+- **Missing VpcId in Details**: The `Details` map for VPC results excludes `VpcId` (relying on `ResourceName`). Including it in `Details` improves JSON output consistency and downstream parsing.
+  - *Fix*: Add `"VpcId": vpcId` to the VPC `Details` map.
 
-## ✅ PASSING CHECKS
-- **AC Implementation**: All 14 Acceptance Criteria are fully implemented.
-- **Security**: `SecureString` parameters are enumerated but values are NOT retrieved (NFR7 compliant).
-- **Resilience**: `Call()` correctly implements the `anyRegionSucceeded` + `lastErr` pattern for robust multi-region scanning.
-- **Nil Safety**: `Process()` includes defensive nil checks for all pointer fields (`Name`, `Type`, `Description`, `LastModifiedDate`, `Version`).
-- **Testing**: Table-driven tests cover all required scenarios including edge cases.

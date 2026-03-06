@@ -45,6 +45,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sts"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/systemsmanager"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/transcribe"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/vpc"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/waf"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 )
@@ -96,6 +97,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, stepfunctions.StepFunctionsCalls...)
 	allServices = append(allServices, systemsmanager.SystemsManagerCalls...)
 	allServices = append(allServices, transcribe.TranscribeCalls...)
+	allServices = append(allServices, vpc.VpcCalls...)
 	allServices = append(allServices, waf.WafCalls...)
 
 	return allServices
