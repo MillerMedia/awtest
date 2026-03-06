@@ -61,7 +61,7 @@ development_status:
   2-6-elasticache-clusters-service-enumeration: done
   2-7-fargate-tasks-service-enumeration: done
   2-8-redshift-clusters-service-enumeration: done
-  2-9-step-functions-state-machines-enumeration: review
+  2-9-step-functions-state-machines-enumeration: done
   2-10-systems-manager-ssm-parameters-enumeration: backlog
   2-11-vpc-infrastructure-service-enumeration: backlog
   epic-2-retrospective: optional

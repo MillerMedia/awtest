@@ -1,6 +1,6 @@
 # Story 2.9: Step Functions State Machines Enumeration
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
