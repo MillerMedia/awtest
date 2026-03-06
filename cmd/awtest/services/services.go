@@ -41,6 +41,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ses"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sns"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sqs"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/stepfunctions"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sts"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/transcribe"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/waf"
@@ -91,6 +92,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ses.SESCalls...)
 	allServices = append(allServices, sns.SNSCalls...)
 	allServices = append(allServices, sqs.SQSCalls...)
+	allServices = append(allServices, stepfunctions.StepFunctionsCalls...)
 	allServices = append(allServices, transcribe.TranscribeCalls...)
 	allServices = append(allServices, waf.WafCalls...)
 
