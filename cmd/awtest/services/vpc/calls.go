@@ -1,6 +1,7 @@
 package vpc
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -21,7 +22,7 @@ type VPCInfrastructure struct {
 var VpcCalls = []types.AWSService{
 	{
 		Name: "ec2:DescribeVpcs",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			infra := &VPCInfrastructure{}
 			var lastErr error
 			anyRegionSucceeded := false
@@ -35,7 +36,7 @@ var VpcCalls = []types.AWSService{
 				var regionVpcs []*ec2.Vpc
 				vpcInput := &ec2.DescribeVpcsInput{}
 				for {
-					output, err := svc.DescribeVpcs(vpcInput)
+					output, err := svc.DescribeVpcsWithContext(ctx, vpcInput)
 					if err != nil {
 						lastErr = err
 						regionFailed = true
@@ -56,7 +57,7 @@ var VpcCalls = []types.AWSService{
 				var regionSubnets []*ec2.Subnet
 				subnetInput := &ec2.DescribeSubnetsInput{}
 				for {
-					output, err := svc.DescribeSubnets(subnetInput)
+					output, err := svc.DescribeSubnetsWithContext(ctx, subnetInput)
 					if err != nil {
 						infra.PartialErrors = append(infra.PartialErrors, fmt.Errorf("ec2:DescribeSubnets in %s: %v", region, err))
 						break
@@ -72,7 +73,7 @@ var VpcCalls = []types.AWSService{
 				var regionSGs []*ec2.SecurityGroup
 				sgInput := &ec2.DescribeSecurityGroupsInput{}
 				for {
-					output, err := svc.DescribeSecurityGroups(sgInput)
+					output, err := svc.DescribeSecurityGroupsWithContext(ctx, sgInput)
 					if err != nil {
 						infra.PartialErrors = append(infra.PartialErrors, fmt.Errorf("ec2:DescribeSecurityGroups in %s: %v", region, err))
 						break

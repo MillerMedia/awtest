@@ -1,6 +1,7 @@
 package sqs
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -27,18 +28,21 @@ func arnToQueueUrl(arn string) string {
 var SQSCalls = []types.AWSService{
 	{
 		Name: "sqs:ListQueues",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allQueues []*string
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := sqs.New(sess)
-				output, err := svc.ListQueues(&sqs.ListQueuesInput{})
+				output, err := svc.ListQueuesWithContext(ctx, &sqs.ListQueuesInput{})
 				if err != nil {
 					return nil, err
 				}
 				allQueues = append(allQueues, output.QueueUrls...)
 			}
-			return allQueues, nil
+			return map[string]interface{}{
+				"queues": allQueues,
+				"ctx":    ctx,
+			}, nil
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -54,7 +58,12 @@ var SQSCalls = []types.AWSService{
 					},
 				}
 			}
-			if queues, ok := output.([]*string); ok {
+			if outputMap, ok := output.(map[string]interface{}); ok {
+				queues, _ := outputMap["queues"].([]*string)
+				ctx, _ := outputMap["ctx"].(context.Context)
+				if ctx == nil {
+					ctx = context.Background()
+				}
 				for _, queue := range queues {
 					queueUrl := ""
 					if queue != nil {
@@ -79,7 +88,7 @@ var SQSCalls = []types.AWSService{
 					svc := sqs.New(sess)
 
 					// Receive messages from the queue
-					receiveOutput, receiveErr := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
+					receiveOutput, receiveErr := svc.ReceiveMessageWithContext(ctx, &sqs.ReceiveMessageInput{
 						QueueUrl: queue,
 					})
 
@@ -95,7 +104,7 @@ var SQSCalls = []types.AWSService{
 						}
 					}
 
-					attrOutput, attrErr := svc.GetQueueAttributes(&sqs.GetQueueAttributesInput{
+					attrOutput, attrErr := svc.GetQueueAttributesWithContext(ctx, &sqs.GetQueueAttributesInput{
 						QueueUrl: queue,
 						AttributeNames: []*string{
 							aws.String("All"),
@@ -137,7 +146,7 @@ var SQSCalls = []types.AWSService{
 														eventBridgeSess := session.Must(session.NewSession())
 														eventBridgeSess.Config.Region = aws.String("us-west-2")
 														eventBridgeSvc := eventbridge.New(eventBridgeSess)
-														eventBridgeOutput, eventBridgeErr := eventBridgeSvc.DescribeRule(&eventbridge.DescribeRuleInput{
+														eventBridgeOutput, eventBridgeErr := eventBridgeSvc.DescribeRuleWithContext(ctx, &eventbridge.DescribeRuleInput{
 															Name: aws.String(ruleName),
 														})
 
@@ -173,7 +182,7 @@ var SQSCalls = []types.AWSService{
 										deadLetterSess := session.Must(session.NewSession())
 										deadLetterSess.Config.Region = aws.String("us-east-1")
 										deadLetterSvc := sqs.New(deadLetterSess)
-										deadLetterAttrOutput, deadLetterAttrErr := deadLetterSvc.ListDeadLetterSourceQueues(&sqs.ListDeadLetterSourceQueuesInput{
+										deadLetterAttrOutput, deadLetterAttrErr := deadLetterSvc.ListDeadLetterSourceQueuesWithContext(ctx, &sqs.ListDeadLetterSourceQueuesInput{
 											QueueUrl: aws.String(deadLetterQueueUrl),
 										})
 
@@ -189,7 +198,7 @@ var SQSCalls = []types.AWSService{
 										}
 
 										// Receive messages from the dead letter queue
-										deadLetterReceiveOutput, deadLetterReceiveErr := deadLetterSvc.ReceiveMessage(&sqs.ReceiveMessageInput{
+										deadLetterReceiveOutput, deadLetterReceiveErr := deadLetterSvc.ReceiveMessageWithContext(ctx, &sqs.ReceiveMessageInput{
 											QueueUrl: aws.String(deadLetterQueueUrl),
 										})
 

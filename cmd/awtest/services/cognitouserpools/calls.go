@@ -1,6 +1,7 @@
 package cognitouserpools
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var CognitoUserPoolsCalls = []types.AWSService{
 	{
 		Name: "cognito-idp:ListUserPools",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allUserPools []*cognitoidentityprovider.UserPoolDescriptionType
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := cognitoidentityprovider.New(sess)
-				output, err := svc.ListUserPools(&cognitoidentityprovider.ListUserPoolsInput{
+				output, err := svc.ListUserPoolsWithContext(ctx, &cognitoidentityprovider.ListUserPoolsInput{
 					MaxResults: aws.Int64(60),
 				})
 				if err != nil {

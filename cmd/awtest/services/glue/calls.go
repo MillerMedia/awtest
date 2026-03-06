@@ -1,6 +1,7 @@
 package glue
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var GlueCalls = []types.AWSService{
 	{
 		Name: "glue:ListWorkflows",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := glue.New(sess)
 			input := &glue.ListWorkflowsInput{}
-			return svc.ListWorkflows(input)
+			return svc.ListWorkflowsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -51,10 +52,10 @@ var GlueCalls = []types.AWSService{
 	},
 	{
 		Name: "glue:ListJobs",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := glue.New(sess)
 			input := &glue.ListJobsInput{}
-			return svc.ListJobs(input)
+			return svc.ListJobsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

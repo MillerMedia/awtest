@@ -1,6 +1,7 @@
 package eventbridge
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,9 +13,9 @@ import (
 var EventbridgeCalls = []types.AWSService{
 	{
 		Name: "eventbridge:ListEventBuses",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := eventbridge.New(sess)
-			output, err := svc.ListEventBuses(&eventbridge.ListEventBusesInput{})
+			output, err := svc.ListEventBusesWithContext(ctx, &eventbridge.ListEventBusesInput{})
 			if err != nil {
 				return nil, err
 			}

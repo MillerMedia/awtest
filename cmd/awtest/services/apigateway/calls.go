@@ -1,6 +1,7 @@
 package apigateway
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -24,7 +25,7 @@ type ApiWithStages struct {
 var APIGatewayCalls = []types.AWSService{
 	{
 		Name: "apigateway:RestApis",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allApisWithStages []ApiWithStages
 
 			originalConfig := sess.Config
@@ -38,20 +39,20 @@ var APIGatewayCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := apigateway.New(regionSess)
-				apisOutput, err := svc.GetRestApis(&apigateway.GetRestApisInput{})
+				apisOutput, err := svc.GetRestApisWithContext(ctx, &apigateway.GetRestApisInput{})
 				if err != nil {
 					return nil, err
 				}
 				for _, api := range apisOutput.Items {
-					stagesOutput, err := svc.GetStages(&apigateway.GetStagesInput{RestApiId: api.Id})
+					stagesOutput, err := svc.GetStagesWithContext(ctx, &apigateway.GetStagesInput{RestApiId: api.Id})
 					if err != nil {
 						return nil, err
 					}
-					modelsOutput, err := svc.GetModels(&apigateway.GetModelsInput{RestApiId: api.Id})
+					modelsOutput, err := svc.GetModelsWithContext(ctx, &apigateway.GetModelsInput{RestApiId: api.Id})
 					if err != nil {
 						return nil, err
 					}
-					resourcesOutput, err := svc.GetResources(&apigateway.GetResourcesInput{RestApiId: api.Id})
+					resourcesOutput, err := svc.GetResourcesWithContext(ctx, &apigateway.GetResourcesInput{RestApiId: api.Id})
 					if err != nil {
 						return nil, err
 					}
@@ -71,7 +72,7 @@ var APIGatewayCalls = []types.AWSService{
 									HttpMethod: aws.String(method),
 								}
 
-								methodOutput, err := svc.GetMethod(input)
+								methodOutput, err := svc.GetMethodWithContext(ctx, input)
 								if err != nil {
 									return nil, err
 								}
@@ -89,7 +90,7 @@ var APIGatewayCalls = []types.AWSService{
 									RestApiId:  api.Id,
 									HttpMethod: aws.String(method),
 								}
-								integrationOutput, err := svc.GetIntegration(integrationInput)
+								integrationOutput, err := svc.GetIntegrationWithContext(ctx, integrationInput)
 
 								if err != nil {
 									// handle the error or just continue if integration is not a necessity
@@ -222,7 +223,7 @@ var APIGatewayCalls = []types.AWSService{
 	},
 	{
 		Name: "apigateway:GetApiKeys",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allApiKeys []*apigateway.ApiKey
 			originalConfig := sess.Config
 			for _, region := range types.Regions {
@@ -235,7 +236,7 @@ var APIGatewayCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := apigateway.New(regionSess)
-				output, err := svc.GetApiKeys(&apigateway.GetApiKeysInput{})
+				output, err := svc.GetApiKeysWithContext(ctx, &apigateway.GetApiKeysInput{})
 				if err != nil {
 					return nil, err
 				}
@@ -281,7 +282,7 @@ var APIGatewayCalls = []types.AWSService{
 	},
 	{
 		Name: "apigateway:GetDomainNames",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allDomainNames []*apigateway.DomainName
 			originalConfig := sess.Config
 			for _, region := range types.Regions {
@@ -294,7 +295,7 @@ var APIGatewayCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := apigateway.New(regionSess)
-				output, err := svc.GetDomainNames(&apigateway.GetDomainNamesInput{})
+				output, err := svc.GetDomainNamesWithContext(ctx, &apigateway.GetDomainNamesInput{})
 				if err != nil {
 					return nil, err
 				}

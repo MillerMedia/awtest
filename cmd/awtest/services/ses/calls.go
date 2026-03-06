@@ -1,6 +1,7 @@
 package ses
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var SESCalls = []types.AWSService{
 	{
 		Name: "ses:ListIdentities",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			originalConfig := sess.Config
 			var allIdentities []string
 			for _, region := range types.Regions {
@@ -26,7 +27,7 @@ var SESCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := ses.New(regionSess)
-				output, err := svc.ListIdentities(&ses.ListIdentitiesInput{})
+				output, err := svc.ListIdentitiesWithContext(ctx, &ses.ListIdentitiesInput{})
 				if err != nil {
 					return nil, err
 				}

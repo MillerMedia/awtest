@@ -1,6 +1,7 @@
 package cloudtrail
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var CloudTrailCalls = []types.AWSService{
 	{
 		Name: "cloudtrail:DescribeTrails",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := cloudtrail.New(sess)
 			input := &cloudtrail.DescribeTrailsInput{}
-			return svc.DescribeTrails(input)
+			return svc.DescribeTrailsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -51,10 +52,10 @@ var CloudTrailCalls = []types.AWSService{
 	},
 	{
 		Name: "cloudtrail:ListTrails",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := cloudtrail.New(sess)
 			input := &cloudtrail.ListTrailsInput{}
-			return svc.ListTrails(input)
+			return svc.ListTrailsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

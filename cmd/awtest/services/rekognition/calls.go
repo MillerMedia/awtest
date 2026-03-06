@@ -1,6 +1,7 @@
 package rekognition
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -15,9 +16,9 @@ import (
 var RekognitionCalls = []types.AWSService{
 	{
 		Name: "rekognition:ListCollections",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := rekognition.New(sess)
-			output, err := svc.ListCollections(&rekognition.ListCollectionsInput{
+			output, err := svc.ListCollectionsWithContext(ctx, &rekognition.ListCollectionsInput{
 				MaxResults: aws.Int64(4096),
 			})
 			if err != nil {
@@ -70,9 +71,9 @@ var RekognitionCalls = []types.AWSService{
 	{
 		// Note: ListStreamProcessors is a legacy API; AWS recommends newer Rekognition Streaming APIs.
 		Name: "rekognition:ListStreamProcessors",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := rekognition.New(sess)
-			output, err := svc.ListStreamProcessors(&rekognition.ListStreamProcessorsInput{})
+			output, err := svc.ListStreamProcessorsWithContext(ctx, &rekognition.ListStreamProcessorsInput{})
 			if err != nil {
 				return nil, err
 			}
@@ -126,9 +127,9 @@ var RekognitionCalls = []types.AWSService{
 	},
 	{
 		Name: "rekognition:DescribeProjects",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := rekognition.New(sess)
-			output, err := svc.DescribeProjects(&rekognition.DescribeProjectsInput{})
+			output, err := svc.DescribeProjectsWithContext(ctx, &rekognition.DescribeProjectsInput{})
 			if err != nil {
 				return nil, err
 			}

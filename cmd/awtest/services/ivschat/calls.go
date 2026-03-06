@@ -1,6 +1,7 @@
 package ivschat
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var IvsChatCalls = []types.AWSService{
 	{
 		Name: "ivsChat:ListRooms",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := ivschat.New(sess)
 			input := &ivschat.ListRoomsInput{}
-			return svc.ListRooms(input)
+			return svc.ListRoomsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

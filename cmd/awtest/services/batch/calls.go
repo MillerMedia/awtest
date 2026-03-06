@@ -1,6 +1,7 @@
 package batch
 
 import (
+	"context"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,9 +12,9 @@ import (
 var BatchCalls = []types.AWSService{
 	{
 		Name: "batch:ListJobs",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := batch.New(sess)
-			output, err := svc.ListJobs(&batch.ListJobsInput{})
+			output, err := svc.ListJobsWithContext(ctx, &batch.ListJobsInput{})
 			if err != nil {
 				return nil, err
 			} else {

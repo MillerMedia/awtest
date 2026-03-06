@@ -1,6 +1,7 @@
 package fargate
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var FargateCalls = []types.AWSService{
 	{
 		Name: "ecs:ListFargateTasks",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allTasks []*ecs.Task
 			var lastErr error
 			anyRegionSucceeded := false
@@ -26,7 +27,7 @@ var FargateCalls = []types.AWSService{
 				listClustersInput := &ecs.ListClustersInput{}
 				regionFailed := false
 				for {
-					clustersOutput, err := svc.ListClusters(listClustersInput)
+					clustersOutput, err := svc.ListClustersWithContext(ctx, listClustersInput)
 					if err != nil {
 						lastErr = err
 						regionFailed = true
@@ -51,7 +52,7 @@ var FargateCalls = []types.AWSService{
 						LaunchType: aws.String("FARGATE"),
 					}
 					for {
-						tasksOutput, err := svc.ListTasks(listTasksInput)
+						tasksOutput, err := svc.ListTasksWithContext(ctx, listTasksInput)
 						if err != nil {
 							break
 						}
@@ -68,7 +69,7 @@ var FargateCalls = []types.AWSService{
 						if end > len(taskArns) {
 							end = len(taskArns)
 						}
-						describeOutput, err := svc.DescribeTasks(&ecs.DescribeTasksInput{
+						describeOutput, err := svc.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
 							Cluster: clusterArn,
 							Tasks:   taskArns[i:end],
 						})

@@ -1,6 +1,7 @@
 package elasticache
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var ElastiCacheCalls = []types.AWSService{
 	{
 		Name: "elasticache:DescribeCacheClusters",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allClusters []*elasticache.CacheCluster
 			var lastErr error
 			anyRegionSucceeded := false
@@ -25,7 +26,7 @@ var ElastiCacheCalls = []types.AWSService{
 				}
 				regionFailed := false
 				for {
-					output, err := svc.DescribeCacheClusters(input)
+					output, err := svc.DescribeCacheClustersWithContext(ctx, input)
 					if err != nil {
 						lastErr = err
 						regionFailed = true

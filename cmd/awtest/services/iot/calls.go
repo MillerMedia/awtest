@@ -1,6 +1,7 @@
 package iot
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var IoTCalls = []types.AWSService{
 	{
 		Name: "iot:ListThings",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := iot.New(sess)
 			input := &iot.ListThingsInput{}
-			return svc.ListThings(input)
+			return svc.ListThingsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -51,10 +52,10 @@ var IoTCalls = []types.AWSService{
 	},
 	{
 		Name: "iot:ListPolicies",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := iot.New(sess)
 			input := &iot.ListPoliciesInput{}
-			return svc.ListPolicies(input)
+			return svc.ListPoliciesWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -90,10 +91,10 @@ var IoTCalls = []types.AWSService{
 	},
 	{
 		Name: "iot:ListCertificates",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := iot.New(sess)
 			input := &iot.ListCertificatesInput{}
-			return svc.ListCertificates(input)
+			return svc.ListCertificatesWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

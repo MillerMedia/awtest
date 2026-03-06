@@ -1,6 +1,7 @@
 package codepipeline
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var CodePipelineCalls = []types.AWSService{
 	{
 		Name: "codepipeline:ListPipelines",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := codepipeline.New(sess)
 			input := &codepipeline.ListPipelinesInput{}
-			return svc.ListPipelines(input)
+			return svc.ListPipelinesWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

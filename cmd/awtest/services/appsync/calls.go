@@ -1,6 +1,7 @@
 package appsync
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var AppSyncCalls = []types.AWSService{
 	{
 		Name: "appsync:ListGraphqlApis",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allApis []*appsync.GraphqlApi
 			originalConfig := sess.Config
 			for _, region := range types.Regions {
@@ -26,7 +27,7 @@ var AppSyncCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := appsync.New(regionSess)
-				output, err := svc.ListGraphqlApis(&appsync.ListGraphqlApisInput{})
+				output, err := svc.ListGraphqlApisWithContext(ctx, &appsync.ListGraphqlApisInput{})
 				if err != nil {
 					return nil, err
 				}

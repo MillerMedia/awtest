@@ -1,6 +1,7 @@
 package systemsmanager
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var SystemsManagerCalls = []types.AWSService{
 	{
 		Name: "ssm:DescribeParameters",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allParameters []*ssm.ParameterMetadata
 			var lastErr error
 			anyRegionSucceeded := false
@@ -23,7 +24,7 @@ var SystemsManagerCalls = []types.AWSService{
 				input := &ssm.DescribeParametersInput{}
 				regionFailed := false
 				for {
-					output, err := svc.DescribeParameters(input)
+					output, err := svc.DescribeParametersWithContext(ctx, input)
 					if err != nil {
 						lastErr = err
 						regionFailed = true

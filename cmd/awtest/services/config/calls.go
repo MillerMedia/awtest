@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -19,7 +20,7 @@ type configResults struct {
 var ConfigCalls = []types.AWSService{
 	{
 		Name: "config:DescribeConfigurationRecorders",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allRecorders []*configservice.ConfigurationRecorder
 			var allRecorderStatuses []*configservice.ConfigurationRecorderStatus
 			var allRules []*configservice.ConfigRule
@@ -27,19 +28,19 @@ var ConfigCalls = []types.AWSService{
 				regionSess := sess.Copy(&aws.Config{Region: aws.String(region)})
 				svc := configservice.New(regionSess)
 
-				recOutput, err := svc.DescribeConfigurationRecorders(&configservice.DescribeConfigurationRecordersInput{})
+				recOutput, err := svc.DescribeConfigurationRecordersWithContext(ctx, &configservice.DescribeConfigurationRecordersInput{})
 				if err != nil {
 					return nil, err
 				}
 				allRecorders = append(allRecorders, recOutput.ConfigurationRecorders...)
 
-				statusOutput, err := svc.DescribeConfigurationRecorderStatus(&configservice.DescribeConfigurationRecorderStatusInput{})
+				statusOutput, err := svc.DescribeConfigurationRecorderStatusWithContext(ctx, &configservice.DescribeConfigurationRecorderStatusInput{})
 				if err != nil {
 					return nil, err
 				}
 				allRecorderStatuses = append(allRecorderStatuses, statusOutput.ConfigurationRecordersStatus...)
 
-				rulesOutput, err := svc.DescribeConfigRules(&configservice.DescribeConfigRulesInput{})
+				rulesOutput, err := svc.DescribeConfigRulesWithContext(ctx, &configservice.DescribeConfigRulesInput{})
 				if err != nil {
 					return nil, err
 				}

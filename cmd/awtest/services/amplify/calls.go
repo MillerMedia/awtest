@@ -1,6 +1,7 @@
 package amplify
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -19,7 +20,7 @@ type AppWithBranches struct {
 var AmplifyCalls = []types.AWSService{
 	{
 		Name: "amplify:ListApps",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allAppsWithBranches []AppWithBranches
 
 			originalConfig := sess.Config
@@ -33,13 +34,13 @@ var AmplifyCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := amplify.New(regionSess)
-				appsOutput, err := svc.ListApps(&amplify.ListAppsInput{})
+				appsOutput, err := svc.ListAppsWithContext(ctx, &amplify.ListAppsInput{})
 				if err != nil {
 					return nil, err
 				}
 
 				for _, app := range appsOutput.Apps {
-					branchesOutput, err := svc.ListBranches(&amplify.ListBranchesInput{AppId: app.AppId})
+					branchesOutput, err := svc.ListBranchesWithContext(ctx, &amplify.ListBranchesInput{AppId: app.AppId})
 					if err != nil {
 						return nil, err
 					}

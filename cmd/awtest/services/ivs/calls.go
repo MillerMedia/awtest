@@ -1,6 +1,7 @@
 package ivs
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var IvsCalls = []types.AWSService{
 	{
 		Name: "ivs:ListChannels",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := ivs.New(sess)
 			input := &ivs.ListChannelsInput{}
-			return svc.ListChannels(input)
+			return svc.ListChannelsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -51,10 +52,10 @@ var IvsCalls = []types.AWSService{
 	},
 	{
 		Name: "ivs:ListStreams",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := ivs.New(sess)
 			input := &ivs.ListStreamsInput{}
-			return svc.ListStreams(input)
+			return svc.ListStreamsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -90,10 +91,10 @@ var IvsCalls = []types.AWSService{
 	},
 	{
 		Name: "ivs:ListStreamKeys",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := ivs.New(sess)
 			input := &ivs.ListStreamKeysInput{}
-			return svc.ListStreamKeys(input)
+			return svc.ListStreamKeysWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

@@ -1,6 +1,7 @@
 package route53
 
 import (
+	"context"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,9 +12,9 @@ import (
 var Route53Calls = []types.AWSService{
 	{
 		Name: "route53:ListHostedZones",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := route53.New(sess)
-			output, err := svc.ListHostedZones(&route53.ListHostedZonesInput{})
+			output, err := svc.ListHostedZonesWithContext(ctx, &route53.ListHostedZonesInput{})
 
 			if err != nil {
 				return nil, err
@@ -61,9 +62,9 @@ var Route53Calls = []types.AWSService{
 	},
 	{
 		Name: "route53:ListHealthChecks",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := route53.New(sess)
-			output, err := svc.ListHealthChecks(&route53.ListHealthChecksInput{})
+			output, err := svc.ListHealthChecksWithContext(ctx, &route53.ListHealthChecksInput{})
 
 			if err != nil {
 				return nil, err

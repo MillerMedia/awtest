@@ -1,6 +1,7 @@
 package ivsrealtime
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var IvsRealtimeCalls = []types.AWSService{
 	{
 		Name: "ivsRealtime:ListStages",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := ivsrealtime.New(sess)
 			input := &ivsrealtime.ListStagesInput{}
-			return svc.ListStages(input)
+			return svc.ListStagesWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

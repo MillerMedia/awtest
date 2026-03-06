@@ -1,6 +1,7 @@
 package certificatemanager
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var CertificateManagerCalls = []types.AWSService{
 	{
 		Name: "acm:ListCertificates",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allCertificates []*acm.CertificateSummary
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := acm.New(sess)
-				output, err := svc.ListCertificates(&acm.ListCertificatesInput{})
+				output, err := svc.ListCertificatesWithContext(ctx, &acm.ListCertificatesInput{})
 				if err != nil {
 					return nil, err
 				}

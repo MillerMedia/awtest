@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -19,12 +20,12 @@ type LogGroupWithStreams struct {
 var CloudwatchCalls = []types.AWSService{
 	{
 		Name: "cloudwatch:DescribeAlarms",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allAlarms []*cloudwatch.MetricAlarm
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := cloudwatch.New(sess)
-				output, err := svc.DescribeAlarms(&cloudwatch.DescribeAlarmsInput{})
+				output, err := svc.DescribeAlarmsWithContext(ctx, &cloudwatch.DescribeAlarmsInput{})
 				if err != nil {
 					return nil, err
 				}
@@ -66,7 +67,7 @@ var CloudwatchCalls = []types.AWSService{
 	},
 	{
 		Name: "cloudwatchlogs:DescribeLogGroupsAndStreams",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allLogGroupsWithStreams []*LogGroupWithStreams
 
 			for _, region := range types.Regions {
@@ -82,14 +83,14 @@ var CloudwatchCalls = []types.AWSService{
 
 				// Describe Log Groups
 				input := &cloudwatchlogs.DescribeLogGroupsInput{}
-				err = svc.DescribeLogGroupsPages(input, func(output *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
+				err = svc.DescribeLogGroupsPagesWithContext(ctx, input, func(output *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
 					for _, logGroup := range output.LogGroups {
 						// Describe Log Streams for each Log Group
 						streamInput := &cloudwatchlogs.DescribeLogStreamsInput{
 							LogGroupName: logGroup.LogGroupName,
 						}
 						var logStreams []*cloudwatchlogs.LogStream
-						err := svc.DescribeLogStreamsPages(streamInput, func(streamOutput *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
+						err := svc.DescribeLogStreamsPagesWithContext(ctx, streamInput, func(streamOutput *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
 							logStreams = append(logStreams, streamOutput.LogStreams...)
 							return true // continue paging
 						})
@@ -169,13 +170,13 @@ var CloudwatchCalls = []types.AWSService{
 	},
 	{
 		Name: "cloudwatchlogs:ListMetrics",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allMetrics []*cloudwatch.Metric
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := cloudwatch.New(sess)
 				input := &cloudwatch.ListMetricsInput{}
-				output, err := svc.ListMetrics(input)
+				output, err := svc.ListMetricsWithContext(ctx, input)
 				if err != nil {
 					return nil, err
 				}

@@ -1,6 +1,7 @@
 package stepfunctions
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var StepFunctionsCalls = []types.AWSService{
 	{
 		Name: "states:ListStateMachines",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allStateMachines []*sfn.StateMachineListItem
 			var lastErr error
 			anyRegionSucceeded := false
@@ -23,7 +24,7 @@ var StepFunctionsCalls = []types.AWSService{
 				input := &sfn.ListStateMachinesInput{}
 				regionFailed := false
 				for {
-					output, err := svc.ListStateMachines(input)
+					output, err := svc.ListStateMachinesWithContext(ctx, input)
 					if err != nil {
 						lastErr = err
 						regionFailed = true

@@ -1,6 +1,7 @@
 package ecs
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var ECSCalls = []types.AWSService{
 	{
 		Name: "ecs:ListClusters",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allClusters []*ecs.Cluster
 
 			originalConfig := sess.Config
@@ -27,13 +28,13 @@ var ECSCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := ecs.New(regionSess)
-				output, err := svc.ListClusters(&ecs.ListClustersInput{})
+				output, err := svc.ListClustersWithContext(ctx, &ecs.ListClustersInput{})
 				if err != nil {
 					return nil, err
 				}
 
 				if len(output.ClusterArns) > 0 {
-					describeOutput, err := svc.DescribeClusters(&ecs.DescribeClustersInput{
+					describeOutput, err := svc.DescribeClustersWithContext(ctx, &ecs.DescribeClustersInput{
 						Clusters: output.ClusterArns,
 					})
 					if err != nil {

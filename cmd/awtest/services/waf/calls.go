@@ -1,6 +1,7 @@
 package waf
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var WafCalls = []types.AWSService{
 	{
 		Name: "waf:ListWebACLs",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := waf.New(sess)
 			input := &waf.ListWebACLsInput{}
-			return svc.ListWebACLs(input)
+			return svc.ListWebACLsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

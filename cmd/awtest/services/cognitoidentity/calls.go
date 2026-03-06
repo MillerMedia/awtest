@@ -1,6 +1,7 @@
 package cognitoidentity
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var CognitoIdentityCalls = []types.AWSService{
 	{
 		Name: "cognitoidentity:ListIdentityPools",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := cognitoidentity.New(sess)
 			input := &cognitoidentity.ListIdentityPoolsInput{
 				MaxResults: aws.Int64(60), // You can adjust this as needed
 			}
-			output, err := svc.ListIdentityPools(input)
+			output, err := svc.ListIdentityPoolsWithContext(ctx, input)
 			if err != nil {
 				return nil, err
 			}

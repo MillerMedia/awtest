@@ -1,6 +1,7 @@
 package efs
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var EfsCalls = []types.AWSService{
 	{
 		Name: "efs:DescribeFileSystems",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allFileSystems []*efs.FileSystemDescription
 			for _, region := range types.Regions {
 				regionSess := sess.Copy(&aws.Config{Region: aws.String(region)})
 				svc := efs.New(regionSess)
-				output, err := svc.DescribeFileSystems(&efs.DescribeFileSystemsInput{})
+				output, err := svc.DescribeFileSystemsWithContext(ctx, &efs.DescribeFileSystemsInput{})
 				if err != nil {
 					return nil, err
 				}

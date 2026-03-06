@@ -69,7 +69,7 @@ development_status:
   # Epic 3: Scan Configuration & Control
   epic-3: in-progress
   3-1-service-filtering-include-exclude-services: done
-  3-2-timeout-configuration: backlog
+  3-2-timeout-configuration: review
   3-3-concurrency-configuration-preparation-for-phase-2: backlog
   epic-3-retrospective: optional
 

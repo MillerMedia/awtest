@@ -1,6 +1,7 @@
 package cloudfront
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -19,7 +20,7 @@ type DistributionWithOrigins struct {
 var CloudFrontCalls = []types.AWSService{
 	{
 		Name: "cloudfront:ListDistributions",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allDistributionsWithOrigins []DistributionWithOrigins
 
 			originalConfig := sess.Config
@@ -33,7 +34,7 @@ var CloudFrontCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := cloudfront.New(regionSess)
-				distributionsOutput, err := svc.ListDistributions(&cloudfront.ListDistributionsInput{})
+				distributionsOutput, err := svc.ListDistributionsWithContext(ctx, &cloudfront.ListDistributionsInput{})
 				if err != nil {
 					return nil, err
 				}

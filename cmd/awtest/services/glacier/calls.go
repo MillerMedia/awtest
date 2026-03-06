@@ -1,6 +1,7 @@
 package glacier
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,9 +13,9 @@ import (
 var GlacierCalls = []types.AWSService{
 	{
 		Name: "glacier:ListVaults",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := glacier.New(sess)
-			output, err := svc.ListVaults(&glacier.ListVaultsInput{})
+			output, err := svc.ListVaultsWithContext(ctx, &glacier.ListVaultsInput{})
 			if err != nil {
 				return nil, err
 			}

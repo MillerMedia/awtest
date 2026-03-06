@@ -1,6 +1,7 @@
 package redshift
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,7 +14,7 @@ import (
 var RedshiftCalls = []types.AWSService{
 	{
 		Name: "redshift:DescribeClusters",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allClusters []*redshift.Cluster
 			var lastErr error
 			anyRegionSucceeded := false
@@ -23,7 +24,7 @@ var RedshiftCalls = []types.AWSService{
 				input := &redshift.DescribeClustersInput{}
 				regionFailed := false
 				for {
-					output, err := svc.DescribeClusters(input)
+					output, err := svc.DescribeClustersWithContext(ctx, input)
 					if err != nil {
 						lastErr = err
 						regionFailed = true

@@ -1,6 +1,7 @@
 package transcribe
 
 import (
+	"context"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,10 +12,10 @@ import (
 var TranscribeCalls = []types.AWSService{
 	{
 		Name: "transcribe:ListTranscriptionJobs",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := transcribeservice.New(sess)
 			input := &transcribeservice.ListTranscriptionJobsInput{}
-			return svc.ListTranscriptionJobs(input)
+			return svc.ListTranscriptionJobsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -52,10 +53,10 @@ var TranscribeCalls = []types.AWSService{
 	},
 	{
 		Name: "transcribe:ListVocabularies",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := transcribeservice.New(sess)
 			input := &transcribeservice.ListVocabulariesInput{}
-			return svc.ListVocabularies(input)
+			return svc.ListVocabulariesWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -93,10 +94,10 @@ var TranscribeCalls = []types.AWSService{
 	},
 	{
 		Name: "transcribe:ListLanguageModels",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := transcribeservice.New(sess)
 			input := &transcribeservice.ListLanguageModelsInput{}
-			return svc.ListLanguageModels(input)
+			return svc.ListLanguageModelsWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -134,10 +135,10 @@ var TranscribeCalls = []types.AWSService{
 	},
 	{
 		Name: "transcribe:StartTranscriptionJob",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := transcribeservice.New(sess)
 			input := &transcribeservice.StartTranscriptionJobInput{}
-			return svc.StartTranscriptionJob(input)
+			return svc.StartTranscriptionJobWithContext(ctx, input)
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult

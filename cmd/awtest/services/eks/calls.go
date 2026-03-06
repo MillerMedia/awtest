@@ -1,6 +1,7 @@
 package eks
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,17 +14,17 @@ import (
 var EKSCalls = []types.AWSService{
 	{
 		Name: "eks:ListClusters",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allClusters []*eks.Cluster
 			for _, region := range types.Regions {
 				regionSess := sess.Copy(&aws.Config{Region: aws.String(region)})
 				svc := eks.New(regionSess)
-				listOutput, err := svc.ListClusters(&eks.ListClustersInput{})
+				listOutput, err := svc.ListClustersWithContext(ctx, &eks.ListClustersInput{})
 				if err != nil {
 					return nil, err
 				}
 				for _, clusterName := range listOutput.Clusters {
-					descOutput, err := svc.DescribeCluster(&eks.DescribeClusterInput{
+					descOutput, err := svc.DescribeClusterWithContext(ctx, &eks.DescribeClusterInput{
 						Name: clusterName,
 					})
 					if err != nil {

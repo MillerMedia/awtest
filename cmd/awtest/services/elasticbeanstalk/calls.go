@@ -1,6 +1,7 @@
 package elasticbeanstalk
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,10 +13,10 @@ import (
 var ElasticBeanstalkCalls = []types.AWSService{
 	{
 		Name: "elasticbeanstalk:DescribeApplications",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := elasticbeanstalk.New(sess)
 			input := &elasticbeanstalk.DescribeApplicationsInput{}
-			output, err := svc.DescribeApplications(input)
+			output, err := svc.DescribeApplicationsWithContext(ctx, input)
 			if err != nil {
 				return nil, err
 			}
@@ -55,10 +56,10 @@ var ElasticBeanstalkCalls = []types.AWSService{
 	},
 	{
 		Name: "elasticbeanstalk:DescribeEvents",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := elasticbeanstalk.New(sess)
 			input := &elasticbeanstalk.DescribeEventsInput{}
-			output, err := svc.DescribeEvents(input)
+			output, err := svc.DescribeEventsWithContext(ctx, input)
 			if err != nil {
 				return nil, err
 			}

@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -12,12 +13,13 @@ import (
 var IAMCalls = []types.AWSService{
 	{
 		Name: "iam:ListUsers",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := iam.New(sess)
-			output, err := svc.ListUsers(&iam.ListUsersInput{})
+			output, err := svc.ListUsersWithContext(ctx, &iam.ListUsersInput{})
 			return map[string]interface{}{
 				"output": output,
 				"sess":   sess,
+				"ctx":    ctx,
 			}, err
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
@@ -38,6 +40,10 @@ var IAMCalls = []types.AWSService{
 			if outputMap, ok := output.(map[string]interface{}); ok {
 				iamOutput, _ := outputMap["output"].(*iam.ListUsersOutput)
 				sess, _ := outputMap["sess"].(*session.Session)
+				ctx, _ := outputMap["ctx"].(context.Context)
+				if ctx == nil {
+					ctx = context.Background()
+				}
 				svc := iam.New(sess)
 				for _, user := range iamOutput.Users {
 					userName := ""
@@ -58,7 +64,7 @@ var IAMCalls = []types.AWSService{
 					utils.PrintResult(debug, "", "iam:ListUsers", fmt.Sprintf("IAM user: %s", utils.ColorizeItem(userName)), nil)
 
 					// list groups for user
-					groupOutput, err := svc.ListGroupsForUser(&iam.ListGroupsForUserInput{
+					groupOutput, err := svc.ListGroupsForUserWithContext(ctx, &iam.ListGroupsForUserInput{
 						UserName: user.UserName,
 					})
 					if err != nil {
@@ -92,7 +98,7 @@ var IAMCalls = []types.AWSService{
 					}
 
 					// list attached user policies
-					attachedPolicyOutput, err := svc.ListAttachedUserPolicies(&iam.ListAttachedUserPoliciesInput{
+					attachedPolicyOutput, err := svc.ListAttachedUserPoliciesWithContext(ctx, &iam.ListAttachedUserPoliciesInput{
 						UserName: user.UserName,
 					})
 					if err != nil {
@@ -126,7 +132,7 @@ var IAMCalls = []types.AWSService{
 					}
 
 					// list user policies
-					policyOutput, err := svc.ListUserPolicies(&iam.ListUserPoliciesInput{
+					policyOutput, err := svc.ListUserPoliciesWithContext(ctx, &iam.ListUserPoliciesInput{
 						UserName: user.UserName,
 					})
 					if err != nil {
@@ -160,7 +166,7 @@ var IAMCalls = []types.AWSService{
 					}
 
 					// list access keys
-					accessKeyOutput, err := svc.ListAccessKeys(&iam.ListAccessKeysInput{
+					accessKeyOutput, err := svc.ListAccessKeysWithContext(ctx, &iam.ListAccessKeysInput{
 						UserName: user.UserName,
 					})
 					if err != nil {
