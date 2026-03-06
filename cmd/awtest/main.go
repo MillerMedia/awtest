@@ -34,6 +34,11 @@ func main() {
 
 	debug := flag.Bool("debug", false, "Enable debug mode")
 
+	var includeServices string
+	var excludeServices string
+	flag.StringVar(&includeServices, "services", "", "Include only specific services (comma-separated, e.g., s3,ec2,iam)")
+	flag.StringVar(&excludeServices, "exclude-services", "", "Exclude specific services (comma-separated, e.g., cloudwatch,cloudtrail)")
+
 	flag.Parse()
 
 	utils.Quiet = *quiet
@@ -147,8 +152,18 @@ func main() {
 
 	startTime := time.Now()
 
+	allSvcs := services.AllServices()
+	filteredSvcs := services.FilterServices(allSvcs, includeServices, excludeServices)
+	if len(filteredSvcs) == 0 {
+		fmt.Fprintln(os.Stderr, "No services matched filter criteria")
+		os.Exit(1)
+	}
+	if includeServices != "" || excludeServices != "" {
+		fmt.Fprintf(os.Stderr, "Scanning %d of %d services...\n", len(filteredSvcs), len(allSvcs))
+	}
+
 	var results []types.ScanResult
-	for _, service := range services.AllServices() {
+	for _, service := range filteredSvcs {
 		if !*quiet {
 			fmt.Fprintf(os.Stderr, "Scanning %s...\n", service.Name)
 		}

@@ -1,16 +1,15 @@
 **🔥 CODE REVIEW FINDINGS, Kn0ck0ut!**
 
-**Story:** _bmad-output/implementation-artifacts/2-11-vpc-infrastructure-service-enumeration.md
-**Git vs Story Discrepancies:** 0 found
-**Issues Found:** 0 High, 1 Medium, 2 Low
+**Story:** 3-1-service-filtering-include-exclude-services
+**Git vs Story Discrepancies:** 2 found
+**Issues Found:** 1 High, 2 Medium, 0 Low
+
+## 🔴 CRITICAL ISSUES
+- **Logic Error in `matchesFilter`**: The condition `strings.Contains(filterName, prefix)` allows filters that *contain* the service name to match (e.g., filtering for "s33" matches "s3" because "s33" contains "s3"). This defeats the purpose of exact/partial matching and prevents `warnUnrecognized` from catching typos.
 
 ## 🟡 MEDIUM ISSUES
-- **Silent failure of Subnet/SG enumeration**: In `Call()`, if `DescribeSubnets` or `DescribeSecurityGroups` fails, the error is silently ignored (break loop). This results in an empty list of subnets/SGs, which is misleading (user thinks there are none, but actually the call failed).
-  - *Fix*: Add `PartialErrors []error` to `VPCInfrastructure` struct. Collect errors in `Call()`. In `Process()`, convert these errors into `ScanResult` entries so the user is alerted to the partial failure.
+- **Uncommitted Changes**: `cmd/awtest/services/service_filter.go` and `cmd/awtest/services/service_filter_test.go` are untracked.
+- **Missing Test Coverage**: No test case ensures that "over-matching" (filter > prefix) doesn't happen, which would have caught the logic error.
 
 ## 🟢 LOW ISSUES
-- **Process function complexity**: The `Process` function is 170+ lines long and handles three distinct resource types. It violates Single Responsibility Principle.
-  - *Fix*: Refactor into `processVPCs`, `processSubnets`, and `processSecurityGroups` helper functions.
-- **Missing VpcId in Details**: The `Details` map for VPC results excludes `VpcId` (relying on `ResourceName`). Including it in `Details` improves JSON output consistency and downstream parsing.
-  - *Fix*: Add `"VpcId": vpcId` to the VPC `Details` map.
-
+- None found.
