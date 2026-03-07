@@ -77,7 +77,7 @@ development_status:
   epic-4: in-progress
   4-1-goreleaser-configuration-cross-platform-builds: done
   4-2-makefile-for-development-workflow: done
-  4-3-github-actions-release-automation: backlog
+  4-3-github-actions-release-automation: done
   4-4-homebrew-tap-setup-distribution: backlog
   epic-4-retrospective: optional
 
