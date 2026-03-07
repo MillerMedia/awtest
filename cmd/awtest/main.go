@@ -17,7 +17,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
-const Version = "v0.3.0"
+const (
+	Version        = "v0.3.0"
+	MinConcurrency = 1
+	MaxConcurrency = 20
+)
 
 func main() {
 	awsAccessKeyID := flag.String("access-key-id", "", "AWS Access Key ID")
@@ -42,9 +46,20 @@ func main() {
 
 	timeout := flag.Duration("timeout", 5*time.Minute, "Maximum scan timeout duration (e.g., 5m, 300s)")
 
+	concurrency := flag.Int("concurrency", MinConcurrency, "Number of concurrent service scans (Phase 2 feature, default: sequential)")
+
 	flag.Parse()
 
 	utils.Quiet = *quiet
+
+	// Validate concurrency
+	if err := validateConcurrency(*concurrency); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
+	}
+	if *concurrency > MinConcurrency {
+		fmt.Fprintf(os.Stderr, "Note: Concurrent enumeration (--concurrency > 1) will be available in Phase 2. Running sequentially.\n")
+	}
 
 	if !*quiet {
 		fmt.Println("     /\\ \\        / /__   __|      | |")
@@ -240,6 +255,17 @@ func getFormatter(format string) (formatters.OutputFormatter, error) {
 	default:
 		return nil, fmt.Errorf("unsupported format: %s (supported: text, json, yaml, csv, table)", format)
 	}
+}
+
+// validateConcurrency checks that the concurrency value is within the allowed range.
+func validateConcurrency(val int) error {
+	if val < MinConcurrency {
+		return fmt.Errorf("Concurrency must be >= %d", MinConcurrency)
+	}
+	if val > MaxConcurrency {
+		return fmt.Errorf("Concurrency must be <= %d", MaxConcurrency)
+	}
+	return nil
 }
 
 // scanServices iterates over services, calling each one and collecting results.
