@@ -1,13 +1,22 @@
 **🔥 CODE REVIEW FINDINGS, Kn0ck0ut!**
 
-**Story:** 4-1-goreleaser-configuration-cross-platform-builds.md
+**Story:** 4-2-makefile-for-development-workflow.md
 **Git vs Story Discrepancies:** 0 found
-**Issues Found:** 0 High, 1 Medium, 2 Low
+**Issues Found:** 0 High, 2 Medium, 0 Low
 
 ## 🟡 MEDIUM ISSUES
-- **Binary Size Exceeds Target (AC #9)**: Acceptance Criteria requires binary size < 15MB. Current builds are ~16-17MB. While `-s -w` flags are used, the AWS SDK dependencies are large. Adding `-trimpath` did not resolve this. This is a missed NFR.
+- **Missing Dependency Checks**: The `lint` and `snapshot` targets fail with "command not found" if `golangci-lint` or `goreleaser` are missing. The error message from the shell is generic.
+- **Robustness**: The `lint` target documentation is in a comment, but a check in the target itself would be better for DX.
 
 ## 🟢 LOW ISSUES
-- **Deprecated Configuration**: The `brews` section in `.goreleaser.yaml` is deprecated in favor of `homebrew_tap` (or similar, warning mentions `homebrew_casks` but context implies formula). It works for now but should be updated.
-- **Missing Build Verification Test**: While `goreleaser check` and manual snapshot builds work, there is no automated test script to verify the build process in CI (though CI is a future story).
+- **Help Target Portability**: The `help` target relies on `grep` and `awk`. This is standard for macOS/Linux but might fail on Windows. Given the project context (macOS dev), this is acceptable.
 
+I recommend improving the `lint` and `snapshot` targets to check for tool existence and provide helpful installation instructions if missing.
+
+What should I do with these issues?
+
+1. **Fix them automatically** - I'll update the Makefile to include dependency checks.
+2. **Create action items** - Add to story Tasks/Subtasks for later.
+3. **Show me details** - Deep dive into specific issues.
+
+Choose [1], [2], or specify which issue to examine:
