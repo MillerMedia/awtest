@@ -85,6 +85,6 @@ development_status:
   # Epic 5: Documentation & Community Contribution Framework
   epic-5: in-progress
   5-1-service-implementation-template-documentation: done
-  5-2-contributing-md-guide-for-service-addition: backlog
+  5-2-contributing-md-guide-for-service-addition: review
   5-3-readme-md-updates-with-new-features: backlog
   epic-5-retrospective: optional
