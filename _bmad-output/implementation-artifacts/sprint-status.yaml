@@ -79,6 +79,7 @@ development_status:
   4-2-makefile-for-development-workflow: done
   4-3-github-actions-release-automation: done
   4-4-homebrew-tap-setup-distribution: done
+  4-5-first-release-validation: done
   epic-4-retrospective: optional
 
   # Epic 5: Documentation & Community Contribution Framework
