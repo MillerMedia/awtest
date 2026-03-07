@@ -19,7 +19,7 @@
   <a href="https://github.com/MillerMedia/awtest/releases/latest"><img src="https://img.shields.io/github/v/release/MillerMedia/awtest?color=ff9900&style=flat-square" alt="Latest Release"></a>
   <a href="https://github.com/MillerMedia/awtest/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/MillerMedia/awtest/test.yml?label=tests&style=flat-square" alt="Tests"></a>
   <a href="https://github.com/MillerMedia/awtest/blob/master/LICENSE"><img src="https://img.shields.io/github/license/MillerMedia/awtest?style=flat-square" alt="License"></a>
-  <a href="https://goreportcard.com/report/github.com/MillerMedia/awtest"><img src="https://goreportcard.com/badge/github.com/MillerMedia/awtest?style=flat-square" alt="Go Report Card"></a>
+  <a href="https://goreportcard.com/report/github.com/MillerMedia/awtest"><img src="https://goreportcard.com/badge/github.com/MillerMedia/awtest" alt="Go Report Card"></a>
 </p>
 
 ---
