@@ -1,6 +1,7 @@
 package secretsmanager
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var SecretsManagerCalls = []types.AWSService{
 	{
 		Name: "secretsmanager:ListSecrets",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allSecrets []*secretsmanager.SecretListEntry
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := secretsmanager.New(sess)
-				output, err := svc.ListSecrets(&secretsmanager.ListSecretsInput{})
+				output, err := svc.ListSecretsWithContext(ctx, &secretsmanager.ListSecretsInput{})
 				if err != nil {
 					return nil, err
 				}

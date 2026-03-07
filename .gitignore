@@ -1,6 +1,8 @@
-.idea/*
-_bmad/
-_bmad-output/
-.claude/
-.cursor/
-sync-bmad.sh
+# Compiled binary
+/awtest
+
+# GoReleaser output
+/dist/
+
+# Test coverage
+coverage.out

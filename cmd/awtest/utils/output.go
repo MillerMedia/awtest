@@ -9,24 +9,23 @@ import (
 	"strings"
 )
 
+// Quiet suppresses informational output when true (set by -quiet flag).
+var Quiet bool
+
 const (
 	ResetColor   = "\033[0m"
 	DisplayColor = "\033[33m"
 )
 
-// Determines the severity based on the error received. For simplicity, we'll classify service
-// call errors as high severity, and successful calls as info severity.
-func determineSeverity(err error) string {
-	//if err != nil {
-	//	return "high"
-	//} else {
-	//	return "info"
-	//}
-
+// DetermineSeverity returns the severity based on the error received.
+// Exported for use by formatters package.
+func DetermineSeverity(err error) string {
 	return "info"
 }
 
-func colorizeMessage(moduleName string, method string, severity string, result string) string {
+// ColorizeMessage creates a colorized message string with the given components.
+// Exported for use by formatters package.
+func ColorizeMessage(moduleName string, method string, severity string, result string) string {
 	moduleNameColored := aurora.BrightGreen(moduleName).String()
 	methodColored := aurora.BrightBlue(method).String()
 	var severityColored string
@@ -49,13 +48,16 @@ func colorizeMessage(moduleName string, method string, severity string, result s
 }
 
 func PrintResult(debug bool, moduleName string, method string, result string, err error) {
-	severity := determineSeverity(err)
+	if Quiet {
+		return
+	}
+	severity := DetermineSeverity(err)
 
 	if moduleName == "" {
 		moduleName = types.DefaultModuleName
 	}
 
-	message := colorizeMessage(moduleName, method, severity, result)
+	message := ColorizeMessage(moduleName, method, severity, result)
 
 	fmt.Println(message)
 }
@@ -69,6 +71,19 @@ func PrintAccessGranted(debug bool, serviceName, resource string, additionalInfo
 }
 
 func HandleAWSError(debug bool, callName string, err error) error {
+	if Quiet {
+		// Still detect invalid key errors even in quiet mode
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == types.InvalidAccessKeyId || awsErr.Code() == types.InvalidClientTokenId {
+				prettyMsg, exists := types.AwsErrorMessages[awsErr.Code()]
+				if !exists {
+					prettyMsg = awsErr.Message()
+				}
+				return &types.InvalidKeyError{Message: prettyMsg}
+			}
+		}
+		return nil
+	}
 	if awsErr, ok := err.(awserr.Error); ok {
 		prettyMsg, exists := types.AwsErrorMessages[awsErr.Code()]
 		if !exists {
@@ -84,7 +99,7 @@ func HandleAWSError(debug bool, callName string, err error) error {
 			}
 		} else if awsErr.Code() == types.InvalidAccessKeyId || awsErr.Code() == types.InvalidClientTokenId {
 			PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)
-			return &types.InvalidKeyError{prettyMsg}
+			return &types.InvalidKeyError{Message: prettyMsg}
 		}
 
 		PrintResult(debug, "", callName, fmt.Sprintf("Error: %s", prettyMsg), err)

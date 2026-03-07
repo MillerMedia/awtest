@@ -1,6 +1,7 @@
 package kms
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var KMSCalls = []types.AWSService{
 	{
 		Name: "kms:ListKeys",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allKeys []*kms.KeyListEntry
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := kms.New(sess)
-				output, err := svc.ListKeys(&kms.ListKeysInput{})
+				output, err := svc.ListKeysWithContext(ctx, &kms.ListKeysInput{})
 				if err != nil {
 					return nil, err
 				}

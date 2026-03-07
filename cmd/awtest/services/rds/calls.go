@@ -1,6 +1,7 @@
 package rds
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var RDSCalls = []types.AWSService{
 	{
 		Name: "rds:DescribeDBInstances",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allDBInstances []*rds.DBInstance
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := rds.New(sess)
-				output, err := svc.DescribeDBInstances(&rds.DescribeDBInstancesInput{})
+				output, err := svc.DescribeDBInstancesWithContext(ctx, &rds.DescribeDBInstancesInput{})
 				if err != nil {
 					return nil, err
 				}

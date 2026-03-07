@@ -1,6 +1,7 @@
 package dynamodb
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,12 @@ import (
 var DynamoDBCalls = []types.AWSService{
 	{
 		Name: "dynamodb:ListTables",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allTableNames []*string
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := dynamodb.New(sess)
-				output, err := svc.ListTables(&dynamodb.ListTablesInput{})
+				output, err := svc.ListTablesWithContext(ctx, &dynamodb.ListTablesInput{})
 				if err != nil {
 					return nil, err
 				}
@@ -66,12 +67,12 @@ var DynamoDBCalls = []types.AWSService{
 	},
 	{
 		Name: "dynamodb:ListExports",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allExports []*dynamodb.ExportSummary
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := dynamodb.New(sess)
-				output, err := svc.ListExports(&dynamodb.ListExportsInput{})
+				output, err := svc.ListExportsWithContext(ctx, &dynamodb.ListExportsInput{})
 				if err != nil {
 					return nil, err
 				}
@@ -123,12 +124,12 @@ var DynamoDBCalls = []types.AWSService{
 	},
 	{
 		Name: "dynamodb:ListBackups",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allBackups []*dynamodb.BackupSummary
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := dynamodb.New(sess)
-				output, err := svc.ListBackups(&dynamodb.ListBackupsInput{})
+				output, err := svc.ListBackupsWithContext(ctx, &dynamodb.ListBackupsInput{})
 				if err != nil {
 					return nil, err
 				}

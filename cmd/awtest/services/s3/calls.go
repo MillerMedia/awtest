@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -13,12 +14,13 @@ import (
 var S3Calls = []types.AWSService{
 	{
 		Name: "s3:ListBuckets",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := s3.New(sess)
-			output, err := svc.ListBuckets(&s3.ListBucketsInput{})
+			output, err := svc.ListBucketsWithContext(ctx, &s3.ListBucketsInput{})
 			return map[string]interface{}{
 				"output": output,
 				"sess":   sess,
+				"ctx":    ctx,
 			}, err
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
@@ -39,6 +41,10 @@ var S3Calls = []types.AWSService{
 			if outputMap, ok := output.(map[string]interface{}); ok {
 				s3Output, _ := outputMap["output"].(*s3.ListBucketsOutput)
 				sess, _ := outputMap["sess"].(*session.Session)
+				ctx, _ := outputMap["ctx"].(context.Context)
+				if ctx == nil {
+					ctx = context.Background()
+				}
 				for _, bucket := range s3Output.Buckets {
 					bucketName := ""
 					if bucket.Name != nil {
@@ -60,7 +66,7 @@ var S3Calls = []types.AWSService{
 
 					// Get the region of the bucket
 					svc := s3.New(sess)
-					locationOutput, err := svc.GetBucketLocation(&s3.GetBucketLocationInput{
+					locationOutput, err := svc.GetBucketLocationWithContext(ctx, &s3.GetBucketLocationInput{
 						Bucket: aws.String(bucketName),
 					})
 
@@ -78,7 +84,7 @@ var S3Calls = []types.AWSService{
 						// Counter for the objects
 						objCount := 0
 						// Function to handle each page of results
-						err = svc.ListObjectsV2Pages(listObjInput, func(page *s3.ListObjectsV2Output, lastPage bool) bool {
+						err = svc.ListObjectsV2PagesWithContext(ctx, listObjInput, func(page *s3.ListObjectsV2Output, lastPage bool) bool {
 							objCount += len(page.Contents)
 							// Continue fetching pages only if we have less than 10000 objects and this is not the last page
 							return objCount < 10000 && !lastPage
@@ -95,9 +101,7 @@ var S3Calls = []types.AWSService{
 								Timestamp:    time.Now(),
 							})
 						} else {
-							countStr := fmt.Sprintf("%d", objCount)
 							if objCount >= 10000 {
-								countStr = "10000+"
 								utils.PrintResult(debug, "", "s3:ListObjects", fmt.Sprintf("S3 Bucket: %s | 10000+ objects", utils.ColorizeItem(bucketName)), nil)
 							} else {
 								utils.PrintResult(debug, "", "s3:ListObjects", fmt.Sprintf("S3 Bucket: %s | %d objects", utils.ColorizeItem(bucketName), objCount), nil)

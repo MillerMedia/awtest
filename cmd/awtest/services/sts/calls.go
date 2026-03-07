@@ -1,6 +1,7 @@
 package sts
 
 import (
+	"context"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,10 +14,13 @@ import (
 var STSCalls = []types.AWSService{
 	{
 		Name: "sts:GetCallerIdentity",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			svc := sts.New(sess)
-			output, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
-			return output, err
+			output, err := svc.GetCallerIdentityWithContext(ctx, &sts.GetCallerIdentityInput{})
+			return map[string]interface{}{
+				"output": output,
+				"ctx":    ctx,
+			}, err
 		},
 		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
 			var results []types.ScanResult
@@ -33,7 +37,12 @@ var STSCalls = []types.AWSService{
 				}
 			}
 
-			if stsOutput, ok := output.(*sts.GetCallerIdentityOutput); ok {
+			if outputMap, ok := output.(map[string]interface{}); ok {
+				stsOutput, _ := outputMap["output"].(*sts.GetCallerIdentityOutput)
+				ctx, _ := outputMap["ctx"].(context.Context)
+				if ctx == nil {
+					ctx = context.Background()
+				}
 				userId := ""
 				account := ""
 				arn := ""
@@ -72,7 +81,7 @@ var STSCalls = []types.AWSService{
 				// List attached user policies by calling the IAM service using the Policy Simulator
 				sess := session.Must(session.NewSession())
 				svc := iam.New(sess)
-				attachedPolicyOutput, err := svc.ListAttachedUserPolicies(&iam.ListAttachedUserPoliciesInput{
+				attachedPolicyOutput, err := svc.ListAttachedUserPoliciesWithContext(ctx, &iam.ListAttachedUserPoliciesInput{
 					UserName: &userName,
 				})
 
@@ -99,7 +108,7 @@ var STSCalls = []types.AWSService{
 				}
 
 				// List user policies by calling the IAM service
-				policyOutput, err := svc.ListUserPolicies(&iam.ListUserPoliciesInput{
+				policyOutput, err := svc.ListUserPoliciesWithContext(ctx, &iam.ListUserPoliciesInput{
 					UserName: &userName,
 				})
 

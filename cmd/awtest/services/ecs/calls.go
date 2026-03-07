@@ -1,18 +1,20 @@
 package ecs
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"time"
 )
 
 var ECSCalls = []types.AWSService{
 	{
 		Name: "ecs:ListClusters",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allClusters []*ecs.Cluster
 
 			originalConfig := sess.Config
@@ -26,13 +28,13 @@ var ECSCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := ecs.New(regionSess)
-				output, err := svc.ListClusters(&ecs.ListClustersInput{})
+				output, err := svc.ListClustersWithContext(ctx, &ecs.ListClustersInput{})
 				if err != nil {
 					return nil, err
 				}
 
 				if len(output.ClusterArns) > 0 {
-					describeOutput, err := svc.DescribeClusters(&ecs.DescribeClustersInput{
+					describeOutput, err := svc.DescribeClustersWithContext(ctx, &ecs.DescribeClustersInput{
 						Clusters: output.ClusterArns,
 					})
 					if err != nil {
@@ -43,9 +45,19 @@ var ECSCalls = []types.AWSService{
 			}
 			return allClusters, nil
 		},
-		Process: func(output interface{}, err error, debug bool) error {
+		Process: func(output interface{}, err error, debug bool) []types.ScanResult {
+			var results []types.ScanResult
+
 			if err != nil {
-				return utils.HandleAWSError(debug, "ecs:ListClusters", err)
+				utils.HandleAWSError(debug, "ecs:ListClusters", err)
+				return []types.ScanResult{
+					{
+						ServiceName: "ECS",
+						MethodName:  "ecs:ListClusters",
+						Error:       err,
+						Timestamp:   time.Now(),
+					},
+				}
 			}
 			if clusters, ok := output.([]*ecs.Cluster); ok {
 				if len(clusters) == 0 {
@@ -63,12 +75,25 @@ var ECSCalls = []types.AWSService{
 						utils.PrintResult(debug, "", "ecs:ListClusters", fmt.Sprintf("Running Tasks: %d", runningTasks), nil)
 						utils.PrintResult(debug, "", "ecs:ListClusters", fmt.Sprintf("Pending Tasks: %d", pendingTasks), nil)
 						utils.PrintResult(debug, "", "ecs:ListClusters", fmt.Sprintf("Active Services: %d", activeServices), nil)
+
+						results = append(results, types.ScanResult{
+							ServiceName:  "ECS",
+							MethodName:   "ecs:ListClusters",
+							ResourceType: "cluster",
+							ResourceName: clusterName,
+							Details: map[string]interface{}{
+								"status":          status,
+								"running_tasks":   runningTasks,
+								"pending_tasks":   pendingTasks,
+								"active_services": activeServices,
+							},
+							Timestamp: time.Now(),
+						})
 					}
 				}
 			}
-			return nil
+			return results
 		},
 		ModuleName: types.DefaultModuleName,
 	},
 }
-

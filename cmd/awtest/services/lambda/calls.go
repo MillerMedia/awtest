@@ -1,6 +1,7 @@
 package lambda
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -20,7 +21,7 @@ type LambdaDetails struct {
 var LambdaCalls = []types.AWSService{
 	{
 		Name: "lambda:ListFunctions",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allDetails []LambdaDetails
 
 			originalConfig := sess.Config
@@ -34,20 +35,20 @@ var LambdaCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := lambda.New(regionSess)
-				output, err := svc.ListFunctions(&lambda.ListFunctionsInput{})
+				output, err := svc.ListFunctionsWithContext(ctx, &lambda.ListFunctionsInput{})
 				if err != nil {
 					return nil, err
 				}
 
 				for _, function := range output.Functions {
-					getFuncOutput, err := svc.GetFunction(&lambda.GetFunctionInput{
+					getFuncOutput, err := svc.GetFunctionWithContext(ctx, &lambda.GetFunctionInput{
 						FunctionName: function.FunctionName,
 					})
 					if err != nil {
 						return nil, err
 					}
 
-					configOutput, err := svc.GetFunctionConfiguration(&lambda.GetFunctionConfigurationInput{
+					configOutput, err := svc.GetFunctionConfigurationWithContext(ctx, &lambda.GetFunctionConfigurationInput{
 						FunctionName: function.FunctionName,
 					})
 					if err != nil {

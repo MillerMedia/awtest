@@ -1,6 +1,7 @@
 package sns
 
 import (
+	"context"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/MillerMedia/awtest/cmd/awtest/utils"
@@ -19,7 +20,7 @@ type TopicWithAttributes struct {
 var SNSCalls = []types.AWSService{
 	{
 		Name: "sns:ListTopics",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allTopicsWithAttributes []TopicWithAttributes
 			originalConfig := sess.Config
 			for _, region := range types.Regions {
@@ -32,7 +33,7 @@ var SNSCalls = []types.AWSService{
 					return nil, err
 				}
 				svc := sns.New(regionSess)
-				output, err := svc.ListTopics(&sns.ListTopicsInput{})
+				output, err := svc.ListTopicsWithContext(ctx, &sns.ListTopicsInput{})
 				if err != nil {
 					return nil, err
 				}
@@ -53,7 +54,7 @@ var SNSCalls = []types.AWSService{
 					}
 					svc = sns.New(attrSess)
 
-					attrOutput, attrErr := svc.GetTopicAttributes(&sns.GetTopicAttributesInput{
+					attrOutput, attrErr := svc.GetTopicAttributesWithContext(ctx, &sns.GetTopicAttributesInput{
 						TopicArn: topic.TopicArn,
 					})
 					if attrErr != nil {

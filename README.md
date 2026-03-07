@@ -7,22 +7,28 @@ AWTest is a tool for pentesting found AWS credentials.
 
 ## Installation
 
-Run the following command to install the latest version -
+### Homebrew (macOS/Linux)
 
 ```sh
-go install -v github.com/MillerMedia/awtest/cmd/awtest@latest
+brew install --cask MillerMedia/tap/awtest
 ```
 
-<details>
-  <summary>Brew</summary>
+### Go Install (all platforms)
 
-  ```sh
-  brew tap MillerMedia/awtest
-  brew update
-  brew install awtest
-  ```
+Requires Go 1.19+:
 
-</details>
+```sh
+go install github.com/MillerMedia/awtest/cmd/awtest@latest
+```
+
+### Binary Download
+
+Download pre-built binaries from [GitHub Releases](https://github.com/MillerMedia/awtest/releases):
+- macOS (Intel): `awtest_<version>_darwin_amd64.tar.gz`
+- macOS (Apple Silicon): `awtest_<version>_darwin_arm64.tar.gz`
+- Linux (amd64): `awtest_<version>_linux_amd64.tar.gz`
+- Linux (arm64): `awtest_<version>_linux_arm64.tar.gz`
+- Windows: `awtest_<version>_windows_amd64.zip`
 
 ## Usage
 

@@ -1,8 +1,10 @@
 package types
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
+	"context"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 const DefaultModuleName = "AWTest"
@@ -36,7 +38,7 @@ func (sr ScanResult) HasError() bool {
 
 type AWSService struct {
 	Name       string
-	Call       func(*session.Session) (interface{}, error)
+	Call       func(context.Context, *session.Session) (interface{}, error)
 	Process    func(interface{}, error, bool) []ScanResult
 	ModuleName string
 }

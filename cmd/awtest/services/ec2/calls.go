@@ -1,6 +1,7 @@
 package ec2
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
@@ -21,27 +22,27 @@ type EC2InstanceDetails struct {
 var EC2Calls = []types.AWSService{
 	{
 		Name: "ec2:DescribeInstances",
-		Call: func(sess *session.Session) (interface{}, error) {
+		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			var allDetails []EC2InstanceDetails
 			for _, region := range types.Regions {
 				sess.Config.Region = aws.String(region)
 				svc := ec2.New(sess)
 				input := &ec2.DescribeInstancesInput{}
-				output, err := svc.DescribeInstances(input)
+				output, err := svc.DescribeInstancesWithContext(ctx, input)
 				if err != nil {
 					return nil, err
 				}
 				for _, reservation := range output.Reservations {
 					for _, instance := range reservation.Instances {
 						// Get user data
-						userData, err := getInstanceUserData(svc, *instance.InstanceId)
+						userData, err := getInstanceUserData(ctx, svc, *instance.InstanceId)
 						if err != nil {
 							userData = fmt.Sprintf("Error retrieving user data: %v", err)
 						}
 
 						// Get Elastic IP
 						elasticIP := ""
-						addressesOutput, err := svc.DescribeAddresses(&ec2.DescribeAddressesInput{
+						addressesOutput, err := svc.DescribeAddressesWithContext(ctx, &ec2.DescribeAddressesInput{
 							Filters: []*ec2.Filter{
 								{
 									Name:   aws.String("instance-id"),
@@ -169,13 +170,13 @@ var EC2Calls = []types.AWSService{
 }
 
 // getInstanceUserData retrieves the user data for a specific EC2 instance.
-func getInstanceUserData(svc *ec2.EC2, instanceId string) (string, error) {
+func getInstanceUserData(ctx context.Context, svc *ec2.EC2, instanceId string) (string, error) {
 	input := &ec2.DescribeInstanceAttributeInput{
 		InstanceId: aws.String(instanceId),
 		Attribute:  aws.String("userData"),
 	}
 
-	result, err := svc.DescribeInstanceAttribute(input)
+	result, err := svc.DescribeInstanceAttributeWithContext(ctx, input)
 	if err != nil {
 		return "", err
 	}
