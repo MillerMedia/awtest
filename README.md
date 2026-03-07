@@ -18,8 +18,9 @@
 <p align="center">
   <a href="https://github.com/MillerMedia/awtest/releases/latest"><img src="https://img.shields.io/github/v/release/MillerMedia/awtest?color=ff9900&style=flat-square" alt="Latest Release"></a>
   <a href="https://github.com/MillerMedia/awtest/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/MillerMedia/awtest/test.yml?label=tests&style=flat-square" alt="Tests"></a>
-  <a href="https://github.com/MillerMedia/awtest/blob/master/LICENSE"><img src="https://img.shields.io/github/license/MillerMedia/awtest?style=flat-square" alt="License"></a>
+  <a href="https://github.com/MillerMedia/awtest/blob/main/LICENSE"><img src="https://img.shields.io/github/license/MillerMedia/awtest?style=flat-square" alt="License"></a>
   <a href="https://goreportcard.com/report/github.com/MillerMedia/awtest"><img src="https://goreportcard.com/badge/github.com/MillerMedia/awtest" alt="Go Report Card"></a>
+  <img src="https://img.shields.io/badge/go-1.19+-00ADD8?style=flat-square&logo=go" alt="Go Version">
 </p>
 
 ---
@@ -137,65 +138,179 @@ awtest --exclude-services=cloudwatch,cloudtrail
 | `--debug` | Enable debug output | `false` |
 | `--version` | Print version and build info | |
 
+## Output Formats
+
+AWTest supports five output formats via the `--format` flag:
+
+| Format | Best For | Example |
+|---|---|---|
+| `text` | Real-time terminal scanning (default) | `[AWTest] [s3:ListBuckets] [info] Found S3 bucket: my-bucket` |
+| `json` | SIEM integration, automated pipelines, programmatic parsing | `{"service":"S3","method":"s3:ListBuckets","resource":"my-bucket"}` |
+| `yaml` | Readable structured reports, documentation | `service: S3` &#124; `method: s3:ListBuckets` |
+| `csv` | Spreadsheet analysis, data import, quick pivoting | `S3,s3:ListBuckets,bucket,my-bucket` |
+| `table` | Structured terminal viewing, sharing in tickets | ASCII table with aligned columns |
+
+```bash
+# Save JSON results for SIEM ingestion
+awtest --format=json --output-file=results.json
+
+# Generate YAML report
+awtest --format=yaml --output-file=report.yaml
+
+# Export CSV for spreadsheet analysis
+awtest --format=csv --output-file=findings.csv
+
+# View results as a formatted table
+awtest --format=table
+```
+
+## Real-World Use Cases
+
+### Penetration Testing
+
+During a fintech engagement, you discover AWS keys in a public GitHub repo. Run awtest to quickly enumerate what the credentials can access:
+
+```bash
+awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --format=json --output-file=findings.json
+```
+
+In 90 seconds, awtest reveals an RDS instance with customer PII, S3 buckets with financial documents, and active Lambda functions -- a critical finding that would have taken hours to uncover manually.
+
+### Bug Bounty
+
+You find hardcoded credentials in client-side JavaScript. Use awtest to demonstrate the full impact:
+
+```bash
+awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --services=s3,secretsmanager,iam,lambda
+```
+
+AWTest reveals S3 buckets with user uploads and Secrets Manager entries, transforming a medium-severity credential exposure into a critical-severity finding with concrete evidence.
+
+### Incident Response
+
+2 AM alert: credentials were committed to a public repo. Assess the blast radius before deciding whether to escalate:
+
+```bash
+awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --timeout=2m
+```
+
+AWTest shows the credentials only have access to CloudWatch logs and one S3 log bucket -- no customer data exposed, no emergency escalation needed.
+
 ## Supported AWS Services (46 services, 77 API calls)
 
 <details>
 <summary>Click to expand full service list</summary>
 
+### Compute & Containers
+
 | Service | API Calls |
 |---|---|
-| Amplify | ListApps |
-| API Gateway | RestApis, GetApiKeys, GetDomainNames, GetModels, GetResources, GetStages |
-| AppSync | ListGraphqlApis |
 | Batch | ListJobs |
+| EC2 | DescribeInstances, DescribeSecurityGroups, DescribeSubnets, DescribeVpcs |
+| ECS | ListClusters, ListFargateTasks |
+| EKS | ListClusters |
+| Elastic Beanstalk | DescribeApplications, DescribeEvents |
+| Lambda | ListFunctions |
+
+### Databases
+
+| Service | API Calls |
+|---|---|
+| DynamoDB | ListTables, ListBackups, ListExports |
+| ElastiCache | DescribeCacheClusters |
+| RDS | DescribeDBInstances |
+| Redshift | DescribeClusters |
+
+### Security & Identity
+
+| Service | API Calls |
+|---|---|
 | Certificate Manager (ACM) | ListCertificates |
-| CloudFormation | ListStacks |
+| Cognito Identity | ListIdentityPools |
+| Cognito User Pools | ListUserPools |
+| IAM | ListUsers, ListAccessKeys, ListUserPolicies, ListAttachedUserPolicies, ListGroupsForUser |
+| KMS | ListKeys |
+| Secrets Manager | ListSecrets |
+| STS | GetCallerIdentity |
+| WAF | ListWebACLs |
+
+### Storage
+
+| Service | API Calls |
+|---|---|
+| EFS | DescribeFileSystems |
+| Glacier | ListVaults |
+| S3 | ListBuckets, ListObjects |
+
+### Networking
+
+| Service | API Calls |
+|---|---|
+| API Gateway | RestApis, GetApiKeys, GetDomainNames, GetModels, GetResources, GetStages |
 | CloudFront | ListDistributions, ListOrigins |
+| Route53 | ListHostedZones, ListHealthChecks |
+| VPC | DescribeVpcs, DescribeSubnets, DescribeSecurityGroups |
+
+### Management & Monitoring
+
+| Service | API Calls |
+|---|---|
+| CloudFormation | ListStacks |
 | CloudTrail | DescribeTrails, ListTrails |
 | CloudWatch | DescribeAlarms |
 | CloudWatch Logs | DescribeLogGroupsAndStreams, ListMetrics |
-| CodePipeline | ListPipelines |
-| Cognito Identity | ListIdentityPools |
-| Cognito User Pools | ListUserPools |
 | Config | DescribeConfigRules, DescribeConfigurationRecorders |
-| DynamoDB | ListTables, ListBackups, ListExports |
-| EC2 | DescribeInstances, DescribeSecurityGroups, DescribeSubnets, DescribeVpcs |
-| ECS | ListClusters, ListFargateTasks |
-| EFS | DescribeFileSystems |
-| EKS | ListClusters |
-| ElastiCache | DescribeCacheClusters |
-| Elastic Beanstalk | DescribeApplications, DescribeEvents |
+| Systems Manager (SSM) | DescribeParameters |
+
+### Application Services
+
+| Service | API Calls |
+|---|---|
 | EventBridge | ListEventBuses |
-| Glacier | ListVaults |
-| Glue | ListJobs, ListWorkflows |
-| IAM | ListUsers, ListAccessKeys, ListUserPolicies, ListAttachedUserPolicies, ListGroupsForUser |
-| IoT | ListThings, ListCertificates, ListPolicies |
-| IVS | ListChannels, ListStreams, ListStreamKeys |
-| IVS Chat | ListRooms |
-| IVS Realtime | ListStages |
-| KMS | ListKeys |
-| Lambda | ListFunctions |
-| RDS | DescribeDBInstances |
-| Redshift | DescribeClusters |
-| Rekognition | ListCollections, DescribeProjects, ListStreamProcessors |
-| Route53 | ListHostedZones, ListHealthChecks |
-| S3 | ListBuckets, ListObjects |
-| Secrets Manager | ListSecrets |
 | SES | ListIdentities |
 | SNS | ListTopics |
 | SQS | ListQueues |
 | Step Functions | ListStateMachines |
-| STS | GetCallerIdentity |
-| Systems Manager (SSM) | DescribeParameters |
+
+### Developer Tools
+
+| Service | API Calls |
+|---|---|
+| Amplify | ListApps |
+| AppSync | ListGraphqlApis |
+| CodePipeline | ListPipelines |
+| Glue | ListJobs, ListWorkflows |
+
+### Media & ML
+
+| Service | API Calls |
+|---|---|
+| IVS | ListChannels, ListStreams, ListStreamKeys |
+| IVS Chat | ListRooms |
+| IVS Realtime | ListStages |
+| Rekognition | ListCollections, DescribeProjects, ListStreamProcessors |
 | Transcribe | ListTranscriptionJobs, ListLanguageModels, ListVocabularies |
-| VPC | DescribeVpcs, DescribeSubnets, DescribeSecurityGroups |
-| WAF | ListWebACLs |
+
+### IoT
+
+| Service | API Calls |
+|---|---|
+| IoT | ListThings, ListCertificates, ListPolicies |
 
 </details>
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions, bug reports, or ideas for improvement, feel free to open an issue or submit a pull request.
+Contributions are welcome! The most common contribution is **adding support for a new AWS service**. A complete service implementation template is provided at [`cmd/awtest/services/_template/`](cmd/awtest/services/_template/) with step-by-step instructions and an annotated reference implementation.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including:
+
+- Development workflow and prerequisites
+- 10-step guide to adding a new AWS service
+- Code standards and naming conventions
+- Testing standards with table-driven test examples
+- 16-item service validation checklist
+- PR process and review expectations
 
 ## Support the Project
 
