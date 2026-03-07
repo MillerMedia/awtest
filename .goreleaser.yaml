@@ -30,15 +30,16 @@ archives:
         formats:
           - zip
 
-brews:
+homebrew_casks:
   - name: awtest
+    binaries:
+      - awtest
     repository:
       owner: MillerMedia
       name: homebrew-tap
     description: "AWS credential enumeration for security assessments"
     homepage: "https://github.com/MillerMedia/awtest"
-    install: |
-      bin.install "awtest"
+    license: "MIT"
 
 release:
   github:
