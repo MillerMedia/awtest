@@ -17,8 +17,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
+var (
+	Version   = "dev"
+	BuildDate = "unknown"
+)
+
 const (
-	Version        = "v0.3.0"
 	MinConcurrency = 1
 	MaxConcurrency = 20
 )
@@ -48,7 +52,14 @@ func main() {
 
 	concurrency := flag.Int("concurrency", MinConcurrency, "Number of concurrent service scans (Phase 2 feature, default: sequential)")
 
+	version := flag.Bool("version", false, "Print version and build date")
+
 	flag.Parse()
+
+	if *version {
+		fmt.Printf("awtest %s (built %s)\n", Version, BuildDate)
+		os.Exit(0)
+	}
 
 	utils.Quiet = *quiet
 
