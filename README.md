@@ -24,11 +24,11 @@
 
 ---
 
-AWTest quickly enumerates the permissions of AWS credentials by performing read-only list/describe operations across **46 AWS services**. Built for pentesters, red teamers, and cloud security assessors.
+AWTest quickly enumerates the permissions of AWS credentials by performing read-only list/describe operations across **46 AWS services** with **77 API calls**. Built for pentesters, red teamers, and cloud security assessors.
 
 ## Features
 
-- **Broad AWS Coverage** -- 46 services scanned including S3, EC2, IAM, Lambda, EKS, RDS, DynamoDB, and more
+- **Broad AWS Coverage** -- 46 services, 77 API calls covering S3, EC2, IAM, Lambda, EKS, RDS, DynamoDB, and more
 - **Multiple Output Formats** -- Text, JSON, YAML, CSV, and table output
 - **File Export** -- Write results directly to a file with `--output-file`
 - **Service Filtering** -- Include or exclude specific services with `--services` and `--exclude-services`
@@ -137,7 +137,7 @@ awtest --exclude-services=cloudwatch,cloudtrail
 | `--debug` | Enable debug output | `false` |
 | `--version` | Print version and build info | |
 
-## Supported AWS Services (46)
+## Supported AWS Services (46 services, 77 API calls)
 
 <details>
 <summary>Click to expand full service list</summary>
@@ -145,41 +145,41 @@ awtest --exclude-services=cloudwatch,cloudtrail
 | Service | API Calls |
 |---|---|
 | Amplify | ListApps |
-| API Gateway | GetRestApis |
+| API Gateway | RestApis, GetApiKeys, GetDomainNames, GetModels, GetResources, GetStages |
 | AppSync | ListGraphqlApis |
-| Batch | DescribeComputeEnvironments |
+| Batch | ListJobs |
 | Certificate Manager (ACM) | ListCertificates |
 | CloudFormation | ListStacks |
-| CloudFront | ListDistributions |
-| CloudTrail | DescribeTrails |
+| CloudFront | ListDistributions, ListOrigins |
+| CloudTrail | DescribeTrails, ListTrails |
 | CloudWatch | DescribeAlarms |
+| CloudWatch Logs | DescribeLogGroupsAndStreams, ListMetrics |
 | CodePipeline | ListPipelines |
 | Cognito Identity | ListIdentityPools |
 | Cognito User Pools | ListUserPools |
-| Config | DescribeConfigRules, DescribeDeliveryChannels |
-| DynamoDB | ListTables |
-| EC2 | DescribeInstances |
-| ECS | ListClusters |
+| Config | DescribeConfigRules, DescribeConfigurationRecorders |
+| DynamoDB | ListTables, ListBackups, ListExports |
+| EC2 | DescribeInstances, DescribeSecurityGroups, DescribeSubnets, DescribeVpcs |
+| ECS | ListClusters, ListFargateTasks |
 | EFS | DescribeFileSystems |
 | EKS | ListClusters |
 | ElastiCache | DescribeCacheClusters |
-| Elastic Beanstalk | DescribeApplications |
+| Elastic Beanstalk | DescribeApplications, DescribeEvents |
 | EventBridge | ListEventBuses |
-| Fargate | ListTasks |
 | Glacier | ListVaults |
-| Glue | GetDatabases |
-| IAM | ListUsers, ListRoles, ListGroups |
-| IoT | ListThings |
-| IVS | ListChannels |
+| Glue | ListJobs, ListWorkflows |
+| IAM | ListUsers, ListAccessKeys, ListUserPolicies, ListAttachedUserPolicies, ListGroupsForUser |
+| IoT | ListThings, ListCertificates, ListPolicies |
+| IVS | ListChannels, ListStreams, ListStreamKeys |
 | IVS Chat | ListRooms |
 | IVS Realtime | ListStages |
 | KMS | ListKeys |
 | Lambda | ListFunctions |
 | RDS | DescribeDBInstances |
 | Redshift | DescribeClusters |
-| Rekognition | ListCollections |
-| Route53 | ListHostedZones |
-| S3 | ListBuckets |
+| Rekognition | ListCollections, DescribeProjects, ListStreamProcessors |
+| Route53 | ListHostedZones, ListHealthChecks |
+| S3 | ListBuckets, ListObjects |
 | Secrets Manager | ListSecrets |
 | SES | ListIdentities |
 | SNS | ListTopics |
@@ -187,7 +187,7 @@ awtest --exclude-services=cloudwatch,cloudtrail
 | Step Functions | ListStateMachines |
 | STS | GetCallerIdentity |
 | Systems Manager (SSM) | DescribeParameters |
-| Transcribe | ListTranscriptionJobs |
+| Transcribe | ListTranscriptionJobs, ListLanguageModels, ListVocabularies |
 | VPC | DescribeVpcs, DescribeSubnets, DescribeSecurityGroups |
 | WAF | ListWebACLs |
 
