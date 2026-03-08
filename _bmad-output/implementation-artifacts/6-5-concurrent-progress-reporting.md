@@ -1,6 +1,6 @@
 # Story 6.5: Concurrent Progress Reporting
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -312,4 +312,5 @@ Claude Opus 4.6 (claude-opus-4-6)
 - `cmd/awtest/main.go` (modified) — create/start/stop progress reporter in scanServices concurrent path
 - `go.mod` (modified) — added golang.org/x/term v0.1.0 direct dependency
 - `go.sum` (modified) — updated checksums for golang.org/x/term and golang.org/x/sys
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified) — story 6.5 status updated to review
+- `cmd/awtest/utils/output.go` (modified) — added ConcurrentMode buffering to prevent output interleaving with progress
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified) — story 6.5 status updated to done

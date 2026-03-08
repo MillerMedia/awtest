@@ -310,10 +310,12 @@ func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Se
 		return results, skippedServices
 	}
 
-	// Concurrent mode: delegate to worker pool with progress reporting
+	// Concurrent mode: buffer inline output so progress display is clean
+	utils.ConcurrentMode = true
 	progress := newProgressReporter(len(svcs), quiet)
 	progress.Start()
 	results, skipped := runWorkerPool(ctx, svcs, sess, concurrency, quiet, debug, progress)
 	progress.Stop()
+	utils.FlushOutput()
 	return results, skipped
 }

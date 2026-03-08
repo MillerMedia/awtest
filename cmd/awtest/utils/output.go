@@ -3,6 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+
 	"github.com/MillerMedia/awtest/cmd/awtest/types"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/logrusorgru/aurora"
@@ -11,6 +13,26 @@ import (
 
 // Quiet suppresses informational output when true (set by -quiet flag).
 var Quiet bool
+
+// ConcurrentMode buffers output instead of printing inline.
+// Set to true during concurrent scans so progress display is not interrupted.
+var ConcurrentMode bool
+
+var (
+	outputMu     sync.Mutex
+	outputBuffer []string
+)
+
+// FlushOutput prints all buffered messages and resets concurrent mode.
+func FlushOutput() {
+	outputMu.Lock()
+	defer outputMu.Unlock()
+	for _, msg := range outputBuffer {
+		fmt.Println(msg)
+	}
+	outputBuffer = nil
+	ConcurrentMode = false
+}
 
 const (
 	ResetColor   = "\033[0m"
@@ -59,6 +81,12 @@ func PrintResult(debug bool, moduleName string, method string, result string, er
 
 	message := ColorizeMessage(moduleName, method, severity, result)
 
+	if ConcurrentMode {
+		outputMu.Lock()
+		outputBuffer = append(outputBuffer, message)
+		outputMu.Unlock()
+		return
+	}
 	fmt.Println(message)
 }
 
