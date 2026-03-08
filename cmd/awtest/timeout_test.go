@@ -53,7 +53,7 @@ func TestScanServices_NoTimeout(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	results, skipped := scanServices(ctx, svcs, nil, true, false)
+	results, skipped := scanServices(ctx, svcs, nil, 1, true, false)
 
 	if len(skipped) != 0 {
 		t.Errorf("expected 0 skipped services, got %d", len(skipped))
@@ -73,7 +73,7 @@ func TestScanServices_AlreadyExpiredContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel immediately
 
-	results, skipped := scanServices(ctx, svcs, nil, true, false)
+	results, skipped := scanServices(ctx, svcs, nil, 1, true, false)
 
 	if len(skipped) != 3 {
 		t.Errorf("expected 3 skipped services, got %d", len(skipped))
@@ -96,7 +96,7 @@ func TestScanServices_TimeoutMidScan(t *testing.T) {
 	// First service completes instantly.
 	// Second service takes 500ms but timeout is 100ms, so it gets cancelled mid-call.
 	// Third service should be skipped.
-	results, skipped := scanServices(ctx, svcs, nil, true, false)
+	results, skipped := scanServices(ctx, svcs, nil, 1, true, false)
 
 	// fast-svc should complete successfully
 	hasSuccessful := false
@@ -135,7 +135,7 @@ func TestScanServices_TimeoutBeforeFirstService(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel before any service runs
 
-	results, skipped := scanServices(ctx, svcs, nil, true, false)
+	results, skipped := scanServices(ctx, svcs, nil, 1, true, false)
 
 	if len(results) != 0 {
 		t.Errorf("expected 0 results when cancelled before first service, got %d", len(results))
@@ -157,7 +157,7 @@ func TestScanServices_PartialResultsPreserved(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	results, skipped := scanServices(ctx, svcs, nil, true, false)
+	results, skipped := scanServices(ctx, svcs, nil, 1, true, false)
 
 	// First two should complete, slow-blocker gets cancelled, last two skipped
 	completedCount := 0

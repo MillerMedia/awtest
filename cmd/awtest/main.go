@@ -50,11 +50,20 @@ func main() {
 
 	timeout := flag.Duration("timeout", 5*time.Minute, "Maximum scan timeout duration (e.g., 5m, 300s)")
 
-	concurrency := flag.Int("concurrency", MinConcurrency, "Number of concurrent service scans (Phase 2 feature, default: sequential)")
+	concurrency := flag.Int("concurrency", MinConcurrency, "Number of concurrent service scans (1-20)")
+	speed := flag.String("speed", SpeedSafe, "Speed preset: safe, fast, insane")
 
 	version := flag.Bool("version", false, "Print version and build date")
 
 	flag.Parse()
+
+	// Detect if --concurrency was explicitly set on the command line
+	concurrencyExplicit := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "concurrency" {
+			concurrencyExplicit = true
+		}
+	})
 
 	if *version {
 		fmt.Printf("awtest %s (built %s)\n", Version, BuildDate)
@@ -63,24 +72,23 @@ func main() {
 
 	utils.Quiet = *quiet
 
-	// Validate concurrency
-	if err := validateConcurrency(*concurrency); err != nil {
+	// Resolve speed preset and concurrency
+	speedResult, err := resolveSpeedAndConcurrency(*speed, *concurrency, concurrencyExplicit)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
-	if *concurrency > MinConcurrency {
-		fmt.Fprintf(os.Stderr, "Note: Concurrent enumeration (--concurrency > 1) will be available in Phase 2. Running sequentially.\n")
-	}
 
 	if !*quiet {
-		fmt.Println("     /\\ \\        / /__   __|      | |")
-		fmt.Println("    /  \\ \\  /\\  / /   | | ___  ___| |_")
-		fmt.Println("   / /\\ \\ \\/  \\/ /    | |/ _ \\/ __| __|")
-		fmt.Println("  / ____ \\  /\\  /     | |  __/\\__ \\ |_")
-		fmt.Println(" /_/    \\_\\/  \\/      |_|\\___||___/\\__|")
-		fmt.Println("----------------------------------------")
-		fmt.Println("Version:", Version)
-		fmt.Println("----------------------------------------")
+		fmt.Fprintln(os.Stderr, "     /\\ \\        / /__   __|      | |")
+		fmt.Fprintln(os.Stderr, "    /  \\ \\  /\\  / /   | | ___  ___| |_")
+		fmt.Fprintln(os.Stderr, "   / /\\ \\ \\/  \\/ /    | |/ _ \\/ __| __|")
+		fmt.Fprintln(os.Stderr, "  / ____ \\  /\\  /     | |  __/\\__ \\ |_")
+		fmt.Fprintln(os.Stderr, " /_/    \\_\\/  \\/      |_|\\___||___/\\__|")
+		fmt.Fprintln(os.Stderr, "----------------------------------------")
+		fmt.Fprintln(os.Stderr, "Version:", Version)
+		fmt.Fprintf(os.Stderr, "Speed: %s (concurrency: %d)\n", speedResult.Preset, speedResult.Concurrency)
+		fmt.Fprintln(os.Stderr, "----------------------------------------")
 	}
 
 	if *awsAccessKeyIDAbbr != "" {
@@ -106,7 +114,6 @@ func main() {
 	// Check if AWS_PROFILE is set and no parameters were provided
 	awsProfile := os.Getenv("AWS_PROFILE")
 	var sess *session.Session
-	var err error
 
 	if *awsAccessKeyID == "" || *awsSecretAccessKey == "" {
 		if awsProfile != "" {
@@ -194,7 +201,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
-	results, skippedServices := scanServices(ctx, filteredSvcs, sess, *quiet, *debug)
+	results, skippedServices := scanServices(ctx, filteredSvcs, sess, speedResult.Concurrency, *quiet, *debug)
 
 	if len(skippedServices) > 0 {
 		fmt.Fprintf(os.Stderr, "\nScan timeout reached after %s. %d services not scanned:\n", *timeout, len(skippedServices))
@@ -281,7 +288,9 @@ func validateConcurrency(val int) error {
 
 // scanServices iterates over services, calling each one and collecting results.
 // If the context is cancelled, remaining services are skipped and their names returned.
-func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Session, quiet, debug bool) ([]types.ScanResult, []string) {
+// The concurrency parameter is accepted for forward-compatibility with Story 6.3's worker pool;
+// until then, scanning remains sequential.
+func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Session, concurrency int, quiet, debug bool) ([]types.ScanResult, []string) {
 	var results []types.ScanResult
 	var skippedServices []string
 	for _, service := range svcs {

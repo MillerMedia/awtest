@@ -1,8 +1,8 @@
-# generated: 2026-03-02
+# generated: 2026-03-07
 # project: awtest
 # project_key: NOKEY
 # tracking_system: file-system
-# story_location: /home/kn0ck0ut/Documents/GitHub/awtest/_bmad-output/implementation-artifacts
+# story_location: /Users/mattmiller/Documents/GitHub/awtest-private/_bmad-output/implementation-artifacts
 
 # STATUS DEFINITIONS:
 # ==================
@@ -33,13 +33,17 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-03-02
+generated: 2026-03-07
 project: awtest
 project_key: NOKEY
 tracking_system: file-system
-story_location: /home/kn0ck0ut/Documents/GitHub/awtest/_bmad-output/implementation-artifacts
+story_location: /Users/mattmiller/Documents/GitHub/awtest-private/_bmad-output/implementation-artifacts
 
 development_status:
+  # ===========================
+  # PHASE 1 (Complete)
+  # ===========================
+
   # Epic 1: Output Format System
   epic-1: done
   1-1-formatter-interface-result-collection: done
@@ -52,7 +56,7 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: AWS Service Coverage Expansion
-  epic-2: in-progress
+  epic-2: done
   2-1-certificate-manager-acm-service-enumeration: done
   2-2-cognito-user-pools-service-enumeration: done
   2-3-aws-config-service-enumeration: done
@@ -67,14 +71,14 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Scan Configuration & Control
-  epic-3: in-progress
+  epic-3: done
   3-1-service-filtering-include-exclude-services: done
   3-2-timeout-configuration: done
   3-3-concurrency-configuration-preparation-for-phase-2: done
   epic-3-retrospective: optional
 
   # Epic 4: Build Automation & Distribution
-  epic-4: in-progress
+  epic-4: done
   4-1-goreleaser-configuration-cross-platform-builds: done
   4-2-makefile-for-development-workflow: done
   4-3-github-actions-release-automation: done
@@ -83,8 +87,57 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Documentation & Community Contribution Framework
-  epic-5: in-progress
+  epic-5: done
   5-1-service-implementation-template-documentation: done
   5-2-contributing-md-guide-for-service-addition: done
   5-3-readme-md-updates-with-new-features: done
   epic-5-retrospective: optional
+
+  # ===========================
+  # PHASE 2
+  # ===========================
+
+  # Epic 6: Concurrent Speed Scanning (Phase 2 Epic 1)
+  epic-6: in-progress
+  6-1-speed-preset-concurrency-flag-resolution: done
+  6-2-safescan-wrapper-panic-recovery-error-classification: backlog
+  6-3-concurrent-worker-pool-execution: backlog
+  6-4-rate-limit-resilience-exponential-backoff: backlog
+  6-5-concurrent-progress-reporting: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Critical Security Service Expansion (Phase 2 Epic 2)
+  epic-7: backlog
+  7-1-ecr-container-registry-enumeration: backlog
+  7-2-aws-organizations-enumeration: backlog
+  7-3-guardduty-enumeration: backlog
+  7-4-security-hub-enumeration: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: High-Priority Service Expansion (Phase 2 Epic 3)
+  epic-8: backlog
+  8-1-codebuild-enumeration: backlog
+  8-2-codecommit-enumeration: backlog
+  8-3-opensearch-enumeration: backlog
+  8-4-sagemaker-enumeration: backlog
+  8-5-aws-backup-enumeration: backlog
+  8-6-athena-enumeration: backlog
+  8-7-macie-enumeration: backlog
+  epic-8-retrospective: optional
+
+  # Epic 9: Infrastructure & Data Service Expansion (Phase 2 Epic 4)
+  epic-9: backlog
+  9-1-codedeploy-enumeration: backlog
+  9-2-direct-connect-enumeration: backlog
+  9-3-emr-cluster-enumeration: backlog
+  9-4-kinesis-enumeration: backlog
+  9-5-mediaconvert-enumeration: backlog
+  9-6-neptune-enumeration: backlog
+  epic-9-retrospective: optional
+
+  # Epic 10: Documentation & Contributor Enablement (Phase 2 Epic 5)
+  epic-10: backlog
+  10-1-readme-update-63-services-speed-presets: backlog
+  10-2-contributing-md-concurrent-testing-requirements: backlog
+  10-3-service-template-concurrent-safe-update: backlog
+  epic-10-retrospective: optional
