@@ -302,8 +302,8 @@ func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Se
 			if !quiet {
 				fmt.Fprintf(os.Stderr, "Scanning %s...\n", service.Name)
 			}
-			output, err := service.Call(ctx, sess)
-			serviceResults := service.Process(output, err, debug)
+			// Category used by Stories 6.3/6.4 for retry and filtering; not used here.
+			serviceResults, _ := safeScan(ctx, service, sess, debug)
 			results = append(results, serviceResults...)
 		}
 	}
