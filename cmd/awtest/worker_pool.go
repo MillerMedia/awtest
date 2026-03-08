@@ -15,7 +15,7 @@ import (
 // Returns collected results (sorted by ServiceName) and skipped service names.
 //
 // If concurrency < 1, it defaults to 1 to avoid deadlock from zero workers.
-func runWorkerPool(ctx context.Context, svcs []types.AWSService, sess *session.Session, concurrency int, quiet, debug bool) ([]types.ScanResult, []string) {
+func runWorkerPool(ctx context.Context, svcs []types.AWSService, sess *session.Session, concurrency int, quiet, debug bool, progress *progressReporter) ([]types.ScanResult, []string) {
 	if concurrency < 1 {
 		concurrency = 1
 	}
@@ -63,6 +63,8 @@ func runWorkerPool(ctx context.Context, svcs []types.AWSService, sess *session.S
 					results = append(results, serviceResults...)
 					mu.Unlock()
 				}
+
+				progress.Increment()
 			}
 		}()
 	}

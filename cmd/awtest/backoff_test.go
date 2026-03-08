@@ -328,7 +328,7 @@ func TestWorkerPoolThrottledServiceDoesNotBlockOthers(t *testing.T) {
 	}
 
 	svcs := []types.AWSService{throttleSvc, fastSvc1, fastSvc2}
-	results, skipped := runWorkerPool(context.Background(), svcs, nil, 3, true, false)
+	results, skipped := runWorkerPool(context.Background(), svcs, nil, 3, true, false, nil)
 
 	if len(skipped) != 0 {
 		t.Errorf("skipped = %v, want none", skipped)

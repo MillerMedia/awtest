@@ -310,6 +310,10 @@ func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Se
 		return results, skippedServices
 	}
 
-	// Concurrent mode: delegate to worker pool
-	return runWorkerPool(ctx, svcs, sess, concurrency, quiet, debug)
+	// Concurrent mode: delegate to worker pool with progress reporting
+	progress := newProgressReporter(len(svcs), quiet)
+	progress.Start()
+	results, skipped := runWorkerPool(ctx, svcs, sess, concurrency, quiet, debug, progress)
+	progress.Stop()
+	return results, skipped
 }

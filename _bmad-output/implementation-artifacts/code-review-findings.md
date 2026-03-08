@@ -1,16 +1,16 @@
-# Code Review: Story 6.4 — Rate Limit Resilience with Exponential Backoff
+# Code Review: Story 6.5 — Concurrent Progress Reporting
 
-**Story:** 6-4-rate-limit-resilience-exponential-backoff  
+**Story:** 6-5-concurrent-progress-reporting  
 **Git vs Story Discrepancies:** 1  
-**Issues Found:** 0 Critical, 2 High, 2 Medium, 2 Low  
+**Issues Found:** 0 Critical, 1 High, 3 Medium, 2 Low  
 
 ---
 
 ## Git vs Story Cross-Check
 
-- **Story File List:** `cmd/awtest/backoff.go`, `cmd/awtest/backoff_test.go`, `cmd/awtest/worker_pool.go`, `cmd/awtest/main.go`
-- **Git reality:** `backoff.go`, `backoff_test.go` untracked (new); `worker_pool.go`, `main.go` modified; `_bmad-output/implementation-artifacts/sprint-status.yaml` modified.
-- **Discrepancy:** `sprint-status.yaml` was changed (story 6.4 set to `review`) but is not listed in the story File List → MEDIUM (incomplete documentation). All claimed application source files are present and match git changes.
+- **Story File List:** `cmd/awtest/progress.go`, `cmd/awtest/progress_test.go`, `cmd/awtest/worker_pool.go`, `cmd/awtest/worker_pool_test.go`, `cmd/awtest/backoff_test.go`, `cmd/awtest/main.go`, `go.mod`, `go.sum`
+- **Git reality:** All listed application files are present (progress.go, progress_test.go untracked; rest modified). `_bmad-output/implementation-artifacts/sprint-status.yaml` is modified but **not** in the story File List.
+- **Discrepancy:** `sprint-status.yaml` was changed (story 6.5 set to `review`) but is not listed in the story File List → MEDIUM (incomplete documentation). All claimed source files match git.
 
 ---
 
@@ -22,77 +22,80 @@ _None._
 
 ## 🟠 HIGH ISSUES
 
-### 1. Timer leak when context is cancelled during backoff sleep
+### 1. Progress line not padded — NFR40 / story “no flickering” violated
 
-**Location:** `cmd/awtest/backoff.go:59-65`
+**Location:** `cmd/awtest/progress.go:58`
 
-**Finding:** The code uses `time.After(delay)` in the select. When the context is cancelled, the select returns on `<-ctx.Done()` and the function exits without receiving from `time.After(delay)`. The timer created by `time.After` is not stopped and remains in the heap until it fires (after `delay`). Per Go docs, this can leak: "The underlying Timer is not recovered by the garbage collector until the timer fires."
+**Finding:** The story and Dev Notes require: “Pad with trailing spaces to ensure previous longer text is cleared.” The implementation uses:
 
-**Evidence:**
 ```go
-select {
-case <-ctx.Done():
-    return results, category
-case <-time.After(delay):
-    // Continue to next retry
-}
+fmt.Fprintf(p.writer, "\rScanning... %d/%d services complete", count, p.total)
 ```
 
-**Recommendation:** Use `time.NewTimer(delay)`, defer `t.Stop()`, and use `t.C` in the select so the timer is stopped when returning on context cancellation.
+There is no padding. When the completed count goes from two digits to one (e.g. 15 → 9), the previous digit(s) remain on screen (e.g. “5” from “15”). Similarly, when total is two digits and count goes from 10 to 9, “1” can remain. This causes visible flicker/leftover characters and violates the explicit padding requirement and NFR40 (“without flickering”).
 
----
+**Recommendation:** Use a fixed-width progress line, e.g. pad the message to a minimum length (e.g. 50 chars) so each update overwrites the previous one:
 
-### 2. No test that total backoff delay per service stays within NFR51 (15s)
+```go
+msg := fmt.Sprintf("\rScanning... %d/%d services complete", count, p.total)
+fmt.Fprintf(p.writer, "\r%-50s\r", msg)
+```
 
-**Location:** Story NFR51 / `backoff_test.go`
-
-**Finding:** NFR51 states "maximum total delay per service is 15 seconds". The implementation caps each individual delay at 15s and uses at most 3 sleeps (attempts 0–2), so the sum is bounded in practice (~10.5s worst case). There is no test that asserts the sum of delays for one service never exceeds 15 seconds. A future change (e.g. cap bug or extra retry) could violate NFR51 without being caught.
-
-**Recommendation:** Add a test that runs `scanWithBackoff` with a mock that records sleep durations (or test `calculateBackoff` for attempts 0,1,2 and assert sum ≤ 15s) to lock in NFR51.
+(or equivalent) so the line is always fully overwritten.
 
 ---
 
 ## 🟡 MEDIUM ISSUES
 
-### 3. File List does not include `sprint-status.yaml`
+### 2. File List does not include `sprint-status.yaml`
 
 **Location:** Story Dev Agent Record → File List
 
-**Finding:** When the story status was set to `review`, `sprint-status.yaml` was updated but is not listed in the File List. This makes it harder for reviewers and tooling to see all changed artifacts.
+**Finding:** When the story status was set to `review`, `sprint-status.yaml` was updated but is not listed in the File List. This hides part of the change set from reviewers and tooling.
 
-**Recommendation:** Add `_bmad-output/implementation-artifacts/sprint-status.yaml` to the File List when it is intentionally updated for the story.
+**Recommendation:** Add `_bmad-output/implementation-artifacts/sprint-status.yaml` to the File List when it is updated for the story.
 
 ---
 
-### 4. Exhausted-retries test can take ~4–10 seconds and may slow CI
+### 3. Non-TTY test does not enforce behavior (AC4)
 
-**Location:** `cmd/awtest/backoff_test.go:189-208` (`TestScanWithBackoffExhaustedRetries`)
+**Location:** `cmd/awtest/progress_test.go:19-26` (`TestNewProgressReporterNonTTYReturnsNil`)
 
-**Finding:** The test uses production backoff constants (1s base, 2x, jitter). With 4 calls (initial + 3 retries), each with real sleeps, worst-case total is ~10.5s. The story notes "accept that tests with 3 retries will take ~3-6 seconds" but does not document this for CI or provide a short-delay variant.
+**Finding:** The test only logs; it does not assert that `p` is nil or non-nil. In environments where stderr is a TTY (e.g. some IDEs or terminals), the reporter would be non-nil and progress would be shown. The test would still pass, so AC4 (“Non-TTY suppresses progress”) is not enforced by this test.
 
-**Recommendation:** Either document the expected test duration in the story/README, or add a build tag / test flag for a "short backoff" test variant that uses smaller delays for fast CI.
+**Recommendation:** Either assert `p == nil` when stderr is not a TTY (and skip or use a pipe when it is), or use a test that forces non-TTY (e.g. redirect stderr to a pipe or use a known non-TTY fd) and then assert `p == nil`.
+
+---
+
+### 4. Progress count can exceed “results” on drain (minor UX)
+
+**Location:** `cmd/awtest/worker_pool.go:59-65`
+
+**Finding:** `progress.Increment()` is called for every service that finishes processing, including when `drained == 1` (results not appended). So after a timeout/drain, the user can see “46/46 services complete” while the summary shows fewer accessible services (some results discarded). This is consistent with “services finished” but can be confusing.
+
+**Recommendation:** Document this in Dev Notes or consider incrementing only when results are appended (so progress reflects “completed and kept”). Either behavior is defensible; the current one should be explicit.
 
 ---
 
 ## 🟢 LOW ISSUES
 
-### 5. Package-level documentation missing for `backoff.go`
+### 5. Possible final flicker when stopping progress
 
-**Location:** `cmd/awtest/backoff.go:1-20`
+**Location:** `cmd/awtest/progress.go:66-73` (`Stop()`)
 
-**Finding:** The file has no package comment describing the retry policy (base delay, multiplier, max retries, max delay, jitter). New maintainers must read the constants and code to understand the contract.
+**Finding:** `Stop()` closes `p.done` then immediately writes the clear line. The ticker goroutine may still perform one more `Fprintf` after the clear (e.g. select chooses `ticker.C` before `p.done`). So the last thing on screen could briefly be the progress line again before the summary is printed.
 
-**Recommendation:** Add a short package or file comment, e.g. "Package main implements exponential backoff for throttled AWS calls: base 1s, 2x multiplier, ±50% jitter, max 3 retries, 15s cap per service (NFR51)."
+**Recommendation:** Optional: add a short sleep or synchronize with the ticker goroutine (e.g. wait for a “stopped” signal) before writing the clear line to avoid this rare flicker.
 
 ---
 
-### 6. No integration test that one throttled service does not block others (AC2)
+### 6. `TestProgressWritesToStderr` only checks a manually built struct
 
-**Location:** Story AC2 / test suite
+**Location:** `cmd/awtest/progress_test.go:113-124`
 
-**Finding:** AC2 requires "other concurrent services continue executing unblocked" when one service is throttling. Unit tests cover `scanWithBackoff` in isolation and per-service independence is inherent in the design (no shared state). There is no integration test that runs the worker pool with one service that throttles and others that succeed, and asserts both completion and that the non-throttled services' results are present.
+**Finding:** The test verifies that a reporter constructed with `writer: os.Stderr` has `p.writer == os.Stderr`. It does not verify that `newProgressReporter()` actually assigns `os.Stderr` when progress is enabled. Behavior is correct in code review, but the test could be stronger by asserting that the reporter returned in a TTY+non-quiet scenario uses stderr (e.g. via pipe or by checking the field when not nil).
 
-**Recommendation:** Add an integration test (e.g. in `worker_pool_test.go` or `backoff_test.go`) that runs multiple services with one mock throttling and verifies all results and ordering.
+**Recommendation:** Low priority; add a test that creates a reporter in a scenario where it is non-nil and asserts the writer is stderr, or document that this test only checks the struct field.
 
 ---
 
@@ -100,17 +103,19 @@ case <-time.After(delay):
 
 | AC / Task | Status | Notes |
 |-----------|--------|--------|
-| AC1 Exponential backoff (base 1s, 2x, jitter, 3 retries, 15s cap) | ✓ | calculateBackoff + scanWithBackoff; tests cover range, jitter, max cap |
-| AC2 Per-service independent backoff | ✓ | No shared state; worker pool calls scanWithBackoff per service (no integration test) |
-| AC3 Jitter prevents retry storms | ✓ | TestCalculateBackoffJitterVariation; formula [0.5, 1.5) |
-| AC4 Transparent success after retry | ✓ | TestScanWithBackoffTransparentSuccess |
-| AC5 Exhausted retries → rate-limited error | ✓ | TestScanWithBackoffExhaustedRetries + RateLimitedErrorMessage |
-| AC6 Context cancellation abandons retries | ✓ | select ctx.Done(); TestScanWithBackoffContextCancellation (timer leak: High #1) |
-| AC7 Complete results for non-throttled services | ✓ | Design + per-service backoff |
-| Task 1 backoff.go | ✓ | Constants, calculateBackoff, scanWithBackoff, context-aware select |
-| Task 2 Integrate into worker pool and sequential | ✓ | worker_pool.go:58, main.go:306 use scanWithBackoff |
-| Task 3 backoff_test.go | ✓ | 11 tests; NFR51 total-delay test missing (High #2) |
-| Task 4 make test, backward compatibility | ✓ | safe mode unchanged; no sync in services/ |
+| AC1 In-place progress at 2 Hz, no flickering | ⚠️ Partial | 500ms ticker ✓; missing padding (High #1) |
+| AC2 Progress replaced by summary | ✓ | Stop() clears line; summary follows |
+| AC3 Quiet suppresses progress | ✓ | newProgressReporter(..., true) → nil |
+| AC4 Non-TTY suppresses progress | ✓ | isTerminal(stderr) checked; test weak (Medium #3) |
+| AC5 Sequential preserves per-service output | ✓ | concurrency ≤ 1 path unchanged |
+| AC6 Progress to stderr only | ✓ | writer = os.Stderr |
+| AC7 Atomic progress counter | ✓ | atomic.AddInt64; Increment after append |
+| Task 1 golang.org/x/term | ✓ | go.mod has v0.1.0, Go 1.19 |
+| Task 2 progress.go | ⚠️ | All subtasks done except padding (High #1) |
+| Task 3 Worker pool integration | ✓ | progress param, Increment() after append |
+| Task 4 main.go scanServices | ✓ | Progress only in concurrent path |
+| Task 5 progress_test.go | ✓ | 11 tests; Non-TTY test weak (Medium #3) |
+| Task 6 make test, no sync in services/ | ✓ | All tests pass with -race; no sync in services/ |
 
 ---
 
@@ -118,8 +123,8 @@ case <-time.After(delay):
 
 What should I do with these issues?
 
-1. **Fix them automatically** — Fix the timer leak (use NewTimer + Stop), add NFR51 test and package comment, update story File List with sprint-status.yaml.
-2. **Create action items** — Add a "Review Follow-ups (AI)" subsection to the story Tasks/Subtasks with `[ ] [AI-Review][Severity] Description [file:line]`.
+1. **Fix them automatically** — Add progress line padding, update story File List with sprint-status.yaml, strengthen Non-TTY test (e.g. pipe-based assert or skip when TTY).
+2. **Create action items** — Add a “Review Follow-ups (AI)” subsection to the story Tasks/Subtasks with `[ ] [AI-Review][Severity] Description [file:line]`.
 3. **Show me details** — Deep dive into specific issues.
 
 Reply with **1**, **2**, or the issue number(s) to examine.

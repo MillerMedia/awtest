@@ -22,7 +22,7 @@ func TestWorkerPoolConcurrentExecution(t *testing.T) {
 
 	ctx := context.Background()
 	start := time.Now()
-	results, skipped := runWorkerPool(ctx, svcs, nil, 5, true, false)
+	results, skipped := runWorkerPool(ctx, svcs, nil, 5, true, false, nil)
 	elapsed := time.Since(start)
 
 	if elapsed > 500*time.Millisecond {
@@ -47,7 +47,7 @@ func TestWorkerPoolDeterministicOrdering(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	results, _ := runWorkerPool(ctx, svcs, nil, 4, true, false)
+	results, _ := runWorkerPool(ctx, svcs, nil, 4, true, false, nil)
 
 	if len(results) != 4 {
 		t.Fatalf("results count = %d, want 4", len(results))
@@ -70,7 +70,7 @@ func TestWorkerPoolThreadSafety(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	results, skipped := runWorkerPool(ctx, svcs, nil, 10, true, false)
+	results, skipped := runWorkerPool(ctx, svcs, nil, 10, true, false, nil)
 
 	if len(results) != 20 {
 		t.Errorf("results count = %d, want 20", len(results))
@@ -90,7 +90,7 @@ func TestWorkerPoolContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	results, skipped := runWorkerPool(ctx, svcs, nil, 2, true, false)
+	results, skipped := runWorkerPool(ctx, svcs, nil, 2, true, false, nil)
 
 	// With 2 workers and 200ms services, cancel at 100ms means workers are mid-scan.
 	// Some results may be partial (context error), some services may be skipped.
@@ -128,7 +128,7 @@ func TestWorkerPoolGracefulDrainDeadline(t *testing.T) {
 	defer cancel()
 
 	start := time.Now()
-	results, skipped := runWorkerPool(ctx, []types.AWSService{slowSvc, fastSvc}, nil, 1, true, false)
+	results, skipped := runWorkerPool(ctx, []types.AWSService{slowSvc, fastSvc}, nil, 1, true, false, nil)
 	elapsed := time.Since(start)
 
 	// Should complete within ~1.1s (50ms context + 1s drain), not 5s
@@ -187,7 +187,7 @@ func TestWorkerPoolPanickingService(t *testing.T) {
 	normalSvc := mockService("NormalService", 10*time.Millisecond)
 
 	ctx := context.Background()
-	results, skipped := runWorkerPool(ctx, []types.AWSService{panicSvc, normalSvc}, nil, 2, true, false)
+	results, skipped := runWorkerPool(ctx, []types.AWSService{panicSvc, normalSvc}, nil, 2, true, false, nil)
 
 	if len(skipped) != 0 {
 		t.Errorf("skipped = %v, want none", skipped)
@@ -224,7 +224,7 @@ func TestWorkerPoolPanickingService(t *testing.T) {
 
 func TestWorkerPoolEmptyServiceList(t *testing.T) {
 	ctx := context.Background()
-	results, skipped := runWorkerPool(ctx, []types.AWSService{}, nil, 5, true, false)
+	results, skipped := runWorkerPool(ctx, []types.AWSService{}, nil, 5, true, false, nil)
 
 	if len(results) != 0 {
 		t.Errorf("results count = %d, want 0", len(results))
@@ -241,7 +241,7 @@ func TestWorkerPoolSingleService(t *testing.T) {
 	// Test with various concurrency levels
 	for _, conc := range []int{1, 5, 20} {
 		t.Run(fmt.Sprintf("concurrency=%d", conc), func(t *testing.T) {
-			results, skipped := runWorkerPool(ctx, []types.AWSService{svc}, nil, conc, true, false)
+			results, skipped := runWorkerPool(ctx, []types.AWSService{svc}, nil, conc, true, false, nil)
 
 			if len(results) != 1 {
 				t.Errorf("results count = %d, want 1", len(results))
@@ -266,7 +266,7 @@ func TestWorkerPoolConcurrencyOneMatchesSequential(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	poolResults, poolSkipped := runWorkerPool(ctx, svcs, nil, 1, true, false)
+	poolResults, poolSkipped := runWorkerPool(ctx, svcs, nil, 1, true, false, nil)
 	seqResults, seqSkipped := scanServices(ctx, svcs, nil, 1, true, false)
 
 	if len(poolResults) != len(seqResults) {
