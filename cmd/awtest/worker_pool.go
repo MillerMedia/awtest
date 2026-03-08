@@ -55,7 +55,7 @@ func runWorkerPool(ctx context.Context, svcs []types.AWSService, sess *session.S
 				default:
 				}
 
-				serviceResults, _ := safeScan(ctx, service, sess, debug)
+				serviceResults, _ := scanWithBackoff(ctx, service, sess, debug)
 
 				// Only append if drain hasn't fired
 				if atomic.LoadInt32(&drained) == 0 {

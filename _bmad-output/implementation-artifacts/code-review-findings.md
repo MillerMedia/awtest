@@ -1,106 +1,98 @@
-# Code Review: Story 6.3 — Concurrent Worker Pool Execution
+# Code Review: Story 6.4 — Rate Limit Resilience with Exponential Backoff
 
-**Story:** 6-3-concurrent-worker-pool-execution  
+**Story:** 6-4-rate-limit-resilience-exponential-backoff  
 **Git vs Story Discrepancies:** 1  
-**Issues Found:** 1 Critical, 2 High, 3 Medium, 2 Low  
+**Issues Found:** 0 Critical, 2 High, 2 Medium, 2 Low  
 
 ---
 
 ## Git vs Story Cross-Check
 
-- **Story File List:** `cmd/awtest/worker_pool.go`, `cmd/awtest/worker_pool_test.go`, `cmd/awtest/main.go`
-- **Git reality:** `main.go` modified; `worker_pool.go`, `worker_pool_test.go` untracked (new); `_bmad-output/implementation-artifacts/sprint-status.yaml` and `code-review-findings.md` modified.
-- **Discrepancy:** `sprint-status.yaml` was changed (e.g. story set to `review`) but is not listed in the story File List → MEDIUM (incomplete documentation). All claimed application source files are present.
+- **Story File List:** `cmd/awtest/backoff.go`, `cmd/awtest/backoff_test.go`, `cmd/awtest/worker_pool.go`, `cmd/awtest/main.go`
+- **Git reality:** `backoff.go`, `backoff_test.go` untracked (new); `worker_pool.go`, `main.go` modified; `_bmad-output/implementation-artifacts/sprint-status.yaml` modified.
+- **Discrepancy:** `sprint-status.yaml` was changed (story 6.4 set to `review`) but is not listed in the story File List → MEDIUM (incomplete documentation). All claimed application source files are present and match git changes.
 
 ---
 
 ## 🔴 CRITICAL ISSUES
 
-### 1. Data race when drain timeout fires: results/skipped read while workers may still append
-
-**Location:** `cmd/awtest/worker_pool.go:73-88`
-
-**Finding:** When the 1-second drain timeout expires (AC4), the code proceeds without waiting for workers to finish. It then drains the jobs channel into `skipped` under the mutex, releases the mutex, and then does `sort.Slice(results, ...)` and `return results, skipped`. Workers that are still inside `safeScan` (e.g. a slow or context-ignoring call) will later append to `results` and/or `skipped` after the main goroutine has already read them. That is a data race: one goroutine reads/writes the slices while another writes. In addition, the caller receives slice headers that share backing arrays with the worker pool; workers can continue appending after return, so the caller may observe changing length/content.
-
-**Evidence:** In the timeout branch we never wait on `done` (wg.Wait()). We only drain the channel and then sort and return. Workers that have not yet returned from `safeScan` are still running and will take `mu` and append when they finish.
-
-**Recommendation:** After deciding “drain timed out,” set a shared “drain timed out” flag (e.g. `sync/atomic` or under `mu`). Before appending to `results`/`skipped`, each worker must check this flag; if set, skip appending (optionally drop or track elsewhere). Only after setting the flag and draining the channel should the main goroutine sort and return, so no further appends happen and there is no race.
+_None._
 
 ---
 
 ## 🟠 HIGH ISSUES
 
-### 2. Drain timeout path: main and workers both receive from closed `jobs` channel
+### 1. Timer leak when context is cancelled during backoff sleep
 
-**Location:** `cmd/awtest/worker_pool.go:76-80`
+**Location:** `cmd/awtest/backoff.go:59-65`
 
-**Finding:** After `close(jobs)` (line 56), the timeout branch does `for svc := range jobs` to “drain remaining jobs.” Workers are also ranging over the same closed channel. So main and workers compete to receive the remaining items. Some items may be processed by workers (and appended to results) after the main goroutine has already decided to timeout and treat “remaining” as skipped. That can leave inconsistent semantics (same job “skipped” by main vs “result” by worker) and reinforces the need to stop workers from appending after timeout (see Critical #1).
+**Finding:** The code uses `time.After(delay)` in the select. When the context is cancelled, the select returns on `<-ctx.Done()` and the function exits without receiving from `time.After(delay)`. The timer created by `time.After` is not stopped and remains in the heap until it fires (after `delay`). Per Go docs, this can leak: "The underlying Timer is not recovered by the garbage collector until the timer fires."
 
-**Recommendation:** Resolve by the same “drain timed out” flag: once set, workers must not append. Then the exact split of who drains which remaining channel items matters less; only the main goroutine’s view of results/skipped is used after timeout.
+**Evidence:**
+```go
+select {
+case <-ctx.Done():
+    return results, category
+case <-time.After(delay):
+    // Continue to next retry
+}
+```
+
+**Recommendation:** Use `time.NewTimer(delay)`, defer `t.Stop()`, and use `t.C` in the select so the timer is stopped when returning on context cancellation.
 
 ---
 
-### 3. Mutex held while draining channel can block workers and extend latency
+### 2. No test that total backoff delay per service stays within NFR51 (15s)
 
-**Location:** `cmd/awtest/worker_pool.go:75-80`
+**Location:** Story NFR51 / `backoff_test.go`
 
-**Finding:** The code holds `mu` while executing `for svc := range jobs { skipped = append(skipped, svc.Name) }`. If many items remain in the channel, this holds the lock for a long time. Workers that finish `safeScan` and need to append to `results`/`skipped` will block on `mu.Lock()`, delaying completion and increasing contention.
+**Finding:** NFR51 states "maximum total delay per service is 15 seconds". The implementation caps each individual delay at 15s and uses at most 3 sleeps (attempts 0–2), so the sum is bounded in practice (~10.5s worst case). There is no test that asserts the sum of delays for one service never exceeds 15 seconds. A future change (e.g. cap bug or extra retry) could violate NFR51 without being caught.
 
-**Recommendation:** Drain into a local slice without holding the mutex, then take `mu` once and append the local slice to `skipped`. Keep critical sections short.
+**Recommendation:** Add a test that runs `scanWithBackoff` with a mock that records sleep durations (or test `calculateBackoff` for attempts 0,1,2 and assert sum ≤ 15s) to lock in NFR51.
 
 ---
 
 ## 🟡 MEDIUM ISSUES
 
-### 4. File List does not include `sprint-status.yaml`
+### 3. File List does not include `sprint-status.yaml`
 
 **Location:** Story Dev Agent Record → File List
 
-**Finding:** If `sprint_status` was updated for this story (e.g. status set to `review`), it should be listed so tooling and reviewers see all changed files.
+**Finding:** When the story status was set to `review`, `sprint-status.yaml` was updated but is not listed in the File List. This makes it harder for reviewers and tooling to see all changed artifacts.
 
 **Recommendation:** Add `_bmad-output/implementation-artifacts/sprint-status.yaml` to the File List when it is intentionally updated for the story.
 
 ---
 
-### 5. Graceful-drain test does not assert partial results or that slow service is omitted
+### 4. Exhausted-retries test can take ~4–10 seconds and may slow CI
 
-**Location:** `cmd/awtest/worker_pool_test.go:106-137` (`TestWorkerPoolGracefulDrainDeadline`)
+**Location:** `cmd/awtest/backoff_test.go:189-208` (`TestScanWithBackoffExhaustedRetries`)
 
-**Finding:** The test only asserts that the call returns in &lt; 2s. It does not assert that the slow service’s result is absent from `results` (or that we get partial results only). A bug that waited for the slow service would still pass the test if it returned within 2s for other reasons.
+**Finding:** The test uses production backoff constants (1s base, 2x, jitter). With 4 calls (initial + 3 retries), each with real sleeps, worst-case total is ~10.5s. The story notes "accept that tests with 3 retries will take ~3-6 seconds" but does not document this for CI or provide a short-delay variant.
 
-**Recommendation:** After `runWorkerPool` returns, assert that the slow service is not in `results` (e.g. no result with `ServiceName == "SlowService"`) and/or that `len(results)` is 0 when only the slow service is run, so that “proceed with partial results” is validated.
-
----
-
-### 6. No test that `runWorkerPool(ctx, svcs, nil, 1, ...)` matches sequential `scanServices(ctx, svcs, nil, 1, ...)`
-
-**Location:** Story AC5 / Task 4
-
-**Finding:** AC5 and Task 4 require that `--speed=safe` (concurrency=1) is identical to Phase 1 sequential behavior. The code achieves this by having `scanServices` use the sequential loop when `concurrency <= 1`, so `runWorkerPool` is never called with concurrency 1 in production. The tests do not explicitly assert that calling `runWorkerPool(..., 1, ...)` would produce the same ordering/results as `scanServices(..., 1, ...)` for the same input. If someone later changed the branching and used the pool for concurrency=1, ordering could differ (pool sorts, sequential does not).
-
-**Recommendation:** Add a test that compares `runWorkerPool(ctx, svcs, nil, 1, true, false)` with `scanServices(ctx, svcs, nil, 1, true, false)` for the same `svcs` and asserts identical results and ordering (or document that concurrency=1 is intentionally never routed to the pool).
+**Recommendation:** Either document the expected test duration in the story/README, or add a build tag / test flag for a "short backoff" test variant that uses smaller delays for fast CI.
 
 ---
 
 ## 🟢 LOW ISSUES
 
-### 7. `runWorkerPool` does not validate `concurrency > 0`
+### 5. Package-level documentation missing for `backoff.go`
 
-**Location:** `cmd/awtest/worker_pool.go:16, 29`
+**Location:** `cmd/awtest/backoff.go:1-20`
 
-**Finding:** If `concurrency` is 0, no workers are started and the main goroutine blocks forever sending on `jobs`. Callers (`scanServices` and `resolveSpeedAndConcurrency`) currently enforce 1–20, so this is defensive only.
+**Finding:** The file has no package comment describing the retry policy (base delay, multiplier, max retries, max delay, jitter). New maintainers must read the constants and code to understand the contract.
 
-**Recommendation:** At the start of `runWorkerPool`, if `concurrency < 1`, return empty results/skipped (or panic with a clear message) to avoid deadlock if the contract is ever relaxed.
+**Recommendation:** Add a short package or file comment, e.g. "Package main implements exponential backoff for throttled AWS calls: base 1s, 2x multiplier, ±50% jitter, max 3 retries, 15s cap per service (NFR51)."
 
 ---
 
-### 8. Possible goroutine leak when drain timeout fires
+### 6. No integration test that one throttled service does not block others (AC2)
 
-**Location:** `cmd/awtest/worker_pool.go:59-82`
+**Location:** Story AC2 / test suite
 
-**Finding:** After the 1s timeout we return without waiting for `wg`. Worker goroutines that are stuck in `safeScan` will eventually finish and then exit their loop (channel is closed). So goroutines eventually exit; no permanent leak. However, until they exit, they hold references and may keep work alive. Documenting or asserting that we do not wait on purpose (per AC4 “drain within 1 second”) would clarify intent.
+**Finding:** AC2 requires "other concurrent services continue executing unblocked" when one service is throttling. Unit tests cover `scanWithBackoff` in isolation and per-service independence is inherent in the design (no shared state). There is no integration test that runs the worker pool with one service that throttles and others that succeed, and asserts both completion and that the non-throttled services' results are present.
 
-**Recommendation:** Add a short comment that after drain timeout we intentionally do not wait for workers and that in-flight work may complete in the background. Optionally add a test that under timeout we return in ~1s and do not block on slow workers.
+**Recommendation:** Add an integration test (e.g. in `worker_pool_test.go` or `backoff_test.go`) that runs multiple services with one mock throttling and verifies all results and ordering.
 
 ---
 
@@ -108,18 +100,17 @@
 
 | AC / Task | Status | Notes |
 |-----------|--------|--------|
-| AC1 Concurrent execution via worker pool | ✓ | Buffered channel, N workers, all use safeScan |
-| AC2 Deterministic output ordering | ✓ | sort.Slice by ServiceName after workers |
-| AC3 Thread-safe result collection | ⚠ | Mutex used; race on timeout path (Critical #1) |
-| AC4 Context cancellation and graceful drain | ⚠ | 1s deadline implemented; race and drain semantics (Critical #1, High #2) |
-| AC5 Safe mode backward compatibility | ✓ | concurrency<=1 uses sequential loop |
-| AC6 Memory discipline | ✓ | Bounded pool; no test for 100MB (NFR) |
-| AC7 Read-only safety | ✓ | No sync in services/; pool only coordinates |
-| Task 1 worker_pool.go | ✓ | runWorkerPool, channel, workers, mutex, sort |
-| Task 2 Graceful drain 1s | ⚠ | Implemented but race when timeout fires |
-| Task 3 scanServices in main.go | ✓ | Delegates to pool when concurrency > 1 |
-| Task 4 worker_pool_test.go | ✓ | Multiple tests; gaps in drain and concurrency=1 (Medium #5, #6) |
-| Task 5 make test / backward compat | ✓ | make test and -race pass; safe mode preserved |
+| AC1 Exponential backoff (base 1s, 2x, jitter, 3 retries, 15s cap) | ✓ | calculateBackoff + scanWithBackoff; tests cover range, jitter, max cap |
+| AC2 Per-service independent backoff | ✓ | No shared state; worker pool calls scanWithBackoff per service (no integration test) |
+| AC3 Jitter prevents retry storms | ✓ | TestCalculateBackoffJitterVariation; formula [0.5, 1.5) |
+| AC4 Transparent success after retry | ✓ | TestScanWithBackoffTransparentSuccess |
+| AC5 Exhausted retries → rate-limited error | ✓ | TestScanWithBackoffExhaustedRetries + RateLimitedErrorMessage |
+| AC6 Context cancellation abandons retries | ✓ | select ctx.Done(); TestScanWithBackoffContextCancellation (timer leak: High #1) |
+| AC7 Complete results for non-throttled services | ✓ | Design + per-service backoff |
+| Task 1 backoff.go | ✓ | Constants, calculateBackoff, scanWithBackoff, context-aware select |
+| Task 2 Integrate into worker pool and sequential | ✓ | worker_pool.go:58, main.go:306 use scanWithBackoff |
+| Task 3 backoff_test.go | ✓ | 11 tests; NFR51 total-delay test missing (High #2) |
+| Task 4 make test, backward compatibility | ✓ | safe mode unchanged; no sync in services/ |
 
 ---
 
@@ -127,8 +118,8 @@
 
 What should I do with these issues?
 
-1. **Fix them automatically** — Fix the data race (drain flag), mutex scope, and add/update tests; update story File List if sprint-status was changed.
-2. **Create action items** — Add a “Review Follow-ups (AI)” subsection to the story Tasks/Subtasks with `[ ] [AI-Review][Severity] Description [file:line]`.
+1. **Fix them automatically** — Fix the timer leak (use NewTimer + Stop), add NFR51 test and package comment, update story File List with sprint-status.yaml.
+2. **Create action items** — Add a "Review Follow-ups (AI)" subsection to the story Tasks/Subtasks with `[ ] [AI-Review][Severity] Description [file:line]`.
 3. **Show me details** — Deep dive into specific issues.
 
 Reply with **1**, **2**, or the issue number(s) to examine.

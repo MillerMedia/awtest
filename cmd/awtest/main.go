@@ -303,7 +303,7 @@ func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Se
 				if !quiet {
 					fmt.Fprintf(os.Stderr, "Scanning %s...\n", service.Name)
 				}
-				serviceResults, _ := safeScan(ctx, service, sess, debug)
+				serviceResults, _ := scanWithBackoff(ctx, service, sess, debug)
 				results = append(results, serviceResults...)
 			}
 		}
