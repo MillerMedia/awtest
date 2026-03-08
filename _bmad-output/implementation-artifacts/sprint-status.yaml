@@ -101,7 +101,7 @@ development_status:
   epic-6: in-progress
   6-1-speed-preset-concurrency-flag-resolution: done
   6-2-safescan-wrapper-panic-recovery-error-classification: done
-  6-3-concurrent-worker-pool-execution: backlog
+  6-3-concurrent-worker-pool-execution: done
   6-4-rate-limit-resilience-exponential-backoff: backlog
   6-5-concurrent-progress-reporting: backlog
   epic-6-retrospective: optional

@@ -286,26 +286,30 @@ func validateConcurrency(val int) error {
 	return nil
 }
 
-// scanServices iterates over services, calling each one and collecting results.
-// If the context is cancelled, remaining services are skipped and their names returned.
-// The concurrency parameter is accepted for forward-compatibility with Story 6.3's worker pool;
-// until then, scanning remains sequential.
+// scanServices executes service scans and collects results.
+// When concurrency is 1, services run sequentially (Phase 1 behavior).
+// When concurrency > 1, services run concurrently via a worker pool.
 func scanServices(ctx context.Context, svcs []types.AWSService, sess *session.Session, concurrency int, quiet, debug bool) ([]types.ScanResult, []string) {
-	var results []types.ScanResult
-	var skippedServices []string
-	for _, service := range svcs {
-		select {
-		case <-ctx.Done():
-			skippedServices = append(skippedServices, service.Name)
-			continue
-		default:
-			if !quiet {
-				fmt.Fprintf(os.Stderr, "Scanning %s...\n", service.Name)
+	// Sequential mode: preserve Phase 1 behavior exactly
+	if concurrency <= 1 {
+		var results []types.ScanResult
+		var skippedServices []string
+		for _, service := range svcs {
+			select {
+			case <-ctx.Done():
+				skippedServices = append(skippedServices, service.Name)
+				continue
+			default:
+				if !quiet {
+					fmt.Fprintf(os.Stderr, "Scanning %s...\n", service.Name)
+				}
+				serviceResults, _ := safeScan(ctx, service, sess, debug)
+				results = append(results, serviceResults...)
 			}
-			// Category used by Stories 6.3/6.4 for retry and filtering; not used here.
-			serviceResults, _ := safeScan(ctx, service, sess, debug)
-			results = append(results, serviceResults...)
 		}
+		return results, skippedServices
 	}
-	return results, skippedServices
+
+	// Concurrent mode: delegate to worker pool
+	return runWorkerPool(ctx, svcs, sess, concurrency, quiet, debug)
 }
