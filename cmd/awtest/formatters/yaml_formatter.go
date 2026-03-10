@@ -80,12 +80,13 @@ func tryMarshalYAML(v interface{}) (errMsg string) {
 
 // yamlMetadata is the metadata section for YAML output with summary.
 type yamlMetadata struct {
-	Timestamp            string `yaml:"timestamp"`
-	Duration             string `yaml:"duration"`
-	TotalServices        int    `yaml:"totalServices"`
-	AccessibleServices   int    `yaml:"accessibleServices"`
-	AccessDeniedServices int    `yaml:"accessDeniedServices"`
-	TotalResources       int    `yaml:"totalResources"`
+	Timestamp            string   `yaml:"timestamp"`
+	Duration             string   `yaml:"duration"`
+	TotalServices        int      `yaml:"totalServices"`
+	AccessibleServices   int      `yaml:"accessibleServices"`
+	AccessDeniedServices int      `yaml:"accessDeniedServices"`
+	TotalResources       int      `yaml:"totalResources"`
+	AccessibleMethodNames []string `yaml:"accessibleMethodNames,omitempty"`
 }
 
 // yamlEnvelope wraps results with metadata for structured output.
@@ -125,12 +126,13 @@ func (f *YAMLFormatter) FormatWithSummary(results []types.ScanResult, summary ty
 
 	envelope := yamlEnvelope{
 		Metadata: yamlMetadata{
-			Timestamp:            summary.Timestamp.Format(time.RFC3339),
-			Duration:             summary.ScanDuration.String(),
-			TotalServices:        summary.TotalServices,
-			AccessibleServices:   summary.AccessibleServices,
-			AccessDeniedServices: summary.AccessDeniedServices,
-			TotalResources:       summary.TotalResources,
+			Timestamp:             summary.Timestamp.Format(time.RFC3339),
+			Duration:              summary.ScanDuration.String(),
+			TotalServices:         summary.TotalServices,
+			AccessibleServices:    summary.AccessibleServices,
+			AccessDeniedServices:  summary.AccessDeniedServices,
+			TotalResources:        summary.TotalResources,
+			AccessibleMethodNames: summary.AccessibleMethodNames,
 		},
 		Results: yamlResults,
 	}

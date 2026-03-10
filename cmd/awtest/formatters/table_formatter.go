@@ -79,6 +79,12 @@ func (f *TableFormatter) FormatWithSummary(results []types.ScanResult, summary t
 	fmt.Fprintf(&buf, "Accessible:         %d\n", summary.AccessibleServices)
 	fmt.Fprintf(&buf, "Access Denied:      %d\n", summary.AccessDeniedServices)
 	fmt.Fprintf(&buf, "Resources Found:    %d\n", summary.TotalResources)
+	methodLines := types.FormatAccessibleMethods(summary.AccessibleMethodNames, func(name string) string {
+		return name
+	})
+	for _, line := range methodLines {
+		fmt.Fprintf(&buf, "%s\n", line)
+	}
 	fmt.Fprintf(&buf, "========================================\n")
 
 	return buf.String(), nil

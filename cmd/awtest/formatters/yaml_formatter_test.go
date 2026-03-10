@@ -309,6 +309,62 @@ func TestYAMLFormatter_FormatWithSummary(t *testing.T) {
 	}
 }
 
+func TestYAMLFormatter_FormatWithSummary_AccessibleMethodNames(t *testing.T) {
+	formatter := NewYAMLFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceName: "bucket-1", Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:         2,
+		AccessibleServices:    1,
+		AccessDeniedServices:  1,
+		TotalResources:        1,
+		AccessibleMethodNames: []string{"iam:ListUsers", "s3:ListBuckets"},
+		ScanDuration:          5 * time.Second,
+		Timestamp:             fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	var parsed yamlEnvelope
+	if err := yaml.Unmarshal([]byte(output), &parsed); err != nil {
+		t.Fatalf("invalid YAML: %v", err)
+	}
+	if len(parsed.Metadata.AccessibleMethodNames) != 2 {
+		t.Errorf("accessibleMethodNames length = %d, want 2", len(parsed.Metadata.AccessibleMethodNames))
+	}
+	if parsed.Metadata.AccessibleMethodNames[0] != "iam:ListUsers" {
+		t.Errorf("accessibleMethodNames[0] = %q, want %q", parsed.Metadata.AccessibleMethodNames[0], "iam:ListUsers")
+	}
+}
+
+func TestYAMLFormatter_FormatWithSummary_NoHits_OmitsField(t *testing.T) {
+	formatter := NewYAMLFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "EC2", Error: errors.New("denied"), Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:        1,
+		AccessDeniedServices: 1,
+		ScanDuration:         5 * time.Second,
+		Timestamp:            fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	if strings.Contains(output, "accessibleMethodNames") {
+		t.Error("should omit accessibleMethodNames when empty (omitempty)")
+	}
+}
+
 func TestYAMLFormatter_ResilientSerialization(t *testing.T) {
 	formatter := NewYAMLFormatter()
 	fixedTime := time.Date(2026, 3, 2, 14, 30, 0, 0, time.UTC)

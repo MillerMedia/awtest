@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
@@ -245,6 +246,7 @@ func main() {
 
 // printTextSummary prints a scan summary to stderr for the default text+stdout path.
 func printTextSummary(summary types.ScanSummary) {
+	au := aurora.NewAurora(isTerminal(int(os.Stderr.Fd())))
 	fmt.Fprintf(os.Stderr, "========================================\n")
 	fmt.Fprintf(os.Stderr, "Scan Summary\n")
 	fmt.Fprintf(os.Stderr, "========================================\n")
@@ -254,6 +256,12 @@ func printTextSummary(summary types.ScanSummary) {
 	fmt.Fprintf(os.Stderr, "Accessible:         %d\n", summary.AccessibleServices)
 	fmt.Fprintf(os.Stderr, "Access Denied:      %d\n", summary.AccessDeniedServices)
 	fmt.Fprintf(os.Stderr, "Resources Found:    %d\n", summary.TotalResources)
+	methodLines := types.FormatAccessibleMethods(summary.AccessibleMethodNames, func(name string) string {
+		return au.BrightGreen(name).String()
+	})
+	for _, line := range methodLines {
+		fmt.Fprintf(os.Stderr, "%s\n", line)
+	}
 	fmt.Fprintf(os.Stderr, "========================================\n")
 }
 

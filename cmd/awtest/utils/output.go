@@ -40,8 +40,12 @@ const (
 )
 
 // DetermineSeverity returns the severity based on the error received.
+// Returns "hit" for nil errors (accessible services) and "info" for errors.
 // Exported for use by formatters package.
 func DetermineSeverity(err error) string {
+	if err == nil {
+		return "hit"
+	}
 	return "info"
 }
 
@@ -54,6 +58,8 @@ func ColorizeMessage(moduleName string, method string, severity string, result s
 
 	if severity == "high" {
 		severityColored = aurora.Red(severity).String()
+	} else if severity == "hit" {
+		severityColored = aurora.BrightGreen(severity).String()
 	} else {
 		severityColored = aurora.Blue(severity).String()
 	}

@@ -2,6 +2,7 @@ package formatters
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -166,6 +167,97 @@ func TestTextFormatter_FormatWithSummary(t *testing.T) {
 	}
 	if !strings.Contains(output, "Resources Found:    1") {
 		t.Error("text output should contain resources count")
+	}
+}
+
+func TestTextFormatter_FormatWithSummary_AccessibleMethods(t *testing.T) {
+	formatter := NewTextFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceType: "bucket", ResourceName: "bucket-1", Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:         2,
+		AccessibleServices:    1,
+		AccessDeniedServices:  1,
+		TotalResources:        1,
+		AccessibleMethodNames: []string{"s3:ListBuckets"},
+		ScanDuration:          5 * time.Second,
+		Timestamp:             fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	if !strings.Contains(output, "Accessible Methods:") {
+		t.Error("expected 'Accessible Methods:' section in output")
+	}
+	if !strings.Contains(output, "s3:ListBuckets") {
+		t.Error("expected method name in accessible methods list")
+	}
+}
+
+func TestTextFormatter_FormatWithSummary_NoHits(t *testing.T) {
+	formatter := NewTextFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+	results := []types.ScanResult{
+		{ServiceName: "EC2", MethodName: "ec2:DescribeInstances", Error: errors.New("denied"), Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:        1,
+		AccessDeniedServices: 1,
+		ScanDuration:         5 * time.Second,
+		Timestamp:            fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	if strings.Contains(output, "Accessible Methods:") {
+		t.Error("should not show 'Accessible Methods:' section when no hits")
+	}
+}
+
+func TestTextFormatter_FormatWithSummary_HitListCap(t *testing.T) {
+	formatter := NewTextFormatter()
+	fixedTime := time.Date(2026, 3, 3, 10, 30, 0, 0, time.UTC)
+
+	// Create 25 method names
+	var methods []string
+	for i := 0; i < 25; i++ {
+		methods = append(methods, fmt.Sprintf("svc:Method%02d", i))
+	}
+
+	results := []types.ScanResult{
+		{ServiceName: "S3", MethodName: "s3:ListBuckets", ResourceName: "b", Timestamp: fixedTime},
+	}
+	summary := types.ScanSummary{
+		TotalServices:         1,
+		AccessibleServices:    1,
+		TotalResources:        1,
+		AccessibleMethodNames: methods,
+		ScanDuration:          5 * time.Second,
+		Timestamp:             fixedTime,
+	}
+
+	output, err := formatter.FormatWithSummary(results, summary)
+	if err != nil {
+		t.Fatalf("FormatWithSummary() error: %v", err)
+	}
+
+	if !strings.Contains(output, "5 more - use --format=json for full list") {
+		t.Error("expected overflow message for >20 methods")
+	}
+	// Should show first 20 but not 21st
+	if !strings.Contains(output, "svc:Method19") {
+		t.Error("expected 20th method in output")
+	}
+	if strings.Contains(output, "  - svc:Method20") {
+		t.Error("should not show 21st method in capped output")
 	}
 }
 

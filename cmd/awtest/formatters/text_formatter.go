@@ -75,6 +75,12 @@ func (f *TextFormatter) FormatWithSummary(results []types.ScanResult, summary ty
 	fmt.Fprintf(&sb, "Accessible:         %d\n", summary.AccessibleServices)
 	fmt.Fprintf(&sb, "Access Denied:      %d\n", summary.AccessDeniedServices)
 	fmt.Fprintf(&sb, "Resources Found:    %d\n", summary.TotalResources)
+	methodLines := types.FormatAccessibleMethods(summary.AccessibleMethodNames, func(name string) string {
+		return name
+	})
+	for _, line := range methodLines {
+		fmt.Fprintf(&sb, "%s\n", line)
+	}
 	sb.WriteString("========================================\n")
 
 	return sb.String(), nil

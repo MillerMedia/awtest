@@ -66,12 +66,13 @@ func (f *JSONFormatter) Format(results []types.ScanResult) (string, error) {
 
 // jsonMetadata is the metadata envelope for JSON output with summary.
 type jsonMetadata struct {
-	Timestamp            string `json:"timestamp"`
-	Duration             string `json:"duration"`
-	TotalServices        int    `json:"totalServices"`
-	AccessibleServices   int    `json:"accessibleServices"`
-	AccessDeniedServices int    `json:"accessDeniedServices"`
-	TotalResources       int    `json:"totalResources"`
+	Timestamp            string   `json:"timestamp"`
+	Duration             string   `json:"duration"`
+	TotalServices        int      `json:"totalServices"`
+	AccessibleServices   int      `json:"accessibleServices"`
+	AccessDeniedServices int      `json:"accessDeniedServices"`
+	TotalResources       int      `json:"totalResources"`
+	AccessibleMethodNames []string `json:"accessibleMethodNames,omitempty"`
 }
 
 // jsonEnvelope wraps results with metadata for structured output.
@@ -111,12 +112,13 @@ func (f *JSONFormatter) FormatWithSummary(results []types.ScanResult, summary ty
 
 	envelope := jsonEnvelope{
 		Metadata: jsonMetadata{
-			Timestamp:            summary.Timestamp.Format(time.RFC3339),
-			Duration:             summary.ScanDuration.String(),
-			TotalServices:        summary.TotalServices,
-			AccessibleServices:   summary.AccessibleServices,
-			AccessDeniedServices: summary.AccessDeniedServices,
-			TotalResources:       summary.TotalResources,
+			Timestamp:             summary.Timestamp.Format(time.RFC3339),
+			Duration:              summary.ScanDuration.String(),
+			TotalServices:         summary.TotalServices,
+			AccessibleServices:    summary.AccessibleServices,
+			AccessDeniedServices:  summary.AccessDeniedServices,
+			TotalResources:        summary.TotalResources,
+			AccessibleMethodNames: summary.AccessibleMethodNames,
 		},
 		Results: jsonResults,
 	}
