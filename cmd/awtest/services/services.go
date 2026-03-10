@@ -16,6 +16,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/config"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/dynamodb"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/ecr"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ecs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/efs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eks"
@@ -69,6 +70,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, config.ConfigCalls...)
 	allServices = append(allServices, dynamodb.DynamoDBCalls...)
 	allServices = append(allServices, ec2.EC2Calls...)
+	allServices = append(allServices, ecr.ECRCalls...)
 	allServices = append(allServices, ecs.ECSCalls...)
 	allServices = append(allServices, efs.EfsCalls...)
 	allServices = append(allServices, eks.EKSCalls...)
