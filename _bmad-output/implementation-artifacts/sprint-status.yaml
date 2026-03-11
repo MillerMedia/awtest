@@ -109,8 +109,8 @@ development_status:
   # Epic 7: Critical Security Service Expansion (Phase 2 Epic 2)
   epic-7: in-progress
   7-1-ecr-container-registry-enumeration: done
-  7-2-aws-organizations-enumeration: review
-  7-3-guardduty-enumeration: backlog
+  7-2-aws-organizations-enumeration: done
+  7-3-guardduty-enumeration: review
   7-4-security-hub-enumeration: backlog
   epic-7-retrospective: optional
 

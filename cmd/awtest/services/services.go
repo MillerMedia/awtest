@@ -26,6 +26,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/fargate"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/glacier"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/glue"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/guardduty"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/iam"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/iot"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ivs"
@@ -81,6 +82,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, fargate.FargateCalls...)
 	allServices = append(allServices, glacier.GlacierCalls...)
 	allServices = append(allServices, glue.GlueCalls...)
+	allServices = append(allServices, guardduty.GuardDutyCalls...)
 	allServices = append(allServices, iam.IAMCalls...)
 	allServices = append(allServices, iot.IoTCalls...)
 	allServices = append(allServices, ivs.IvsCalls...)
