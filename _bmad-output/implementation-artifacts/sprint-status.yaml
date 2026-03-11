@@ -117,7 +117,7 @@ development_status:
   # Epic 8: High-Priority Service Expansion (Phase 2 Epic 3)
   epic-8: in-progress
   8-1-codebuild-enumeration: done
-  8-2-codecommit-enumeration: backlog
+  8-2-codecommit-enumeration: done
   8-3-opensearch-enumeration: backlog
   8-4-sagemaker-enumeration: backlog
   8-5-aws-backup-enumeration: backlog
