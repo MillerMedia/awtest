@@ -41,6 +41,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/route53"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/s3"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/secretsmanager"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/securityhub"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ses"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sns"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/sqs"
@@ -97,6 +98,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, route53.Route53Calls...)
 	allServices = append(allServices, s3.S3Calls...)
 	allServices = append(allServices, secretsmanager.SecretsManagerCalls...)
+	allServices = append(allServices, securityhub.SecurityHubCalls...)
 	allServices = append(allServices, ses.SESCalls...)
 	allServices = append(allServices, sns.SNSCalls...)
 	allServices = append(allServices, sqs.SQSCalls...)
