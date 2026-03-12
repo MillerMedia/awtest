@@ -43,6 +43,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/rekognition"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/route53"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/s3"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/sagemaker"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/secretsmanager"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/securityhub"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ses"
@@ -103,6 +104,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, rekognition.RekognitionCalls...)
 	allServices = append(allServices, route53.Route53Calls...)
 	allServices = append(allServices, s3.S3Calls...)
+	allServices = append(allServices, sagemaker.SageMakerCalls...)
 	allServices = append(allServices, secretsmanager.SecretsManagerCalls...)
 	allServices = append(allServices, securityhub.SecurityHubCalls...)
 	allServices = append(allServices, ses.SESCalls...)

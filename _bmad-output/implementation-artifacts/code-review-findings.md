@@ -1,9 +1,14 @@
 **🔥 CODE REVIEW FINDINGS, Kn0ck0ut!**
 
-**Story:** 7-4-security-hub-enumeration.md
+**Story:** _bmad-output/implementation-artifacts/8-4-sagemaker-enumeration.md
 **Git vs Story Discrepancies:** 0 found
-**Issues Found:** 0 High, 0 Medium, 1 Low
+**Issues Found:** 0 High, 2 Medium, 2 Low
+
+## 🟡 MEDIUM ISSUES
+- **Missing `DefaultCodeRepository` in Notebook Enumeration**: The `ListNotebookInstances` call ignores the `DefaultCodeRepository` field. This is a critical security attribute for SageMaker notebooks (indicating if they are connected to a repo) and was highlighted in the "SageMaker SDK v1 Specifics".
+- **Missing `LastModifiedTime`**: `ListNotebookInstances`, `ListEndpoints`, and `ListTrainingJobs` all provide `LastModifiedTime` in the SDK response, but it is not captured. This is valuable for determining staleness of resources.
 
 ## 🟢 LOW ISSUES
-- **Poor Resource Name Extraction**: In `securityhub:GetEnabledStandards`, the `extractStandardName` function extracts the second-to-last component of the ARN. For ARNs like `arn:aws:securityhub:::standards/aws-foundational-security-best-practices/v/1.0.0`, this results in the resource name being "v" (as seen in the tests) instead of "aws-foundational-security-best-practices". This makes the output less useful.
+- **Redundant Error Logging**: The `Call` function logs errors via `utils.HandleAWSError(false, ...)` and then returns the error. The `Process` function then logs the *same* error again via `utils.HandleAWSError(debug, ...)`. This causes duplicate error logs.
+- **Verbose Pointer Dereferencing**: The code uses manual nil checks (`if ptr != nil { val = *ptr }`) instead of the standard `aws.StringValue()`, `aws.TimeValue()`, etc. helpers provided by the AWS SDK. This makes the code unnecessarily verbose.
 

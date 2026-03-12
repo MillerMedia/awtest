@@ -118,8 +118,8 @@ development_status:
   epic-8: in-progress
   8-1-codebuild-enumeration: done
   8-2-codecommit-enumeration: done
-  8-3-opensearch-enumeration: review
-  8-4-sagemaker-enumeration: backlog
+  8-3-opensearch-enumeration: done
+  8-4-sagemaker-enumeration: done
   8-5-aws-backup-enumeration: backlog
   8-6-athena-enumeration: backlog
   8-7-macie-enumeration: backlog
