@@ -82,6 +82,10 @@ So that I can discover ML infrastructure and potential data access through noteb
   - [x] `go vet ./cmd/awtest/...`
   - [x] `go test -race ./cmd/awtest/...` (verify no race conditions in full suite)
 
+- [x] Task 8: Review Follow-ups (AI)
+  - [x] [AI-Review][Medium] Missing `DefaultCodeRepository` in Notebook Enumeration [cmd/awtest/services/sagemaker/calls.go]
+  - [x] [AI-Review][Medium] Missing `LastModifiedTime` in Notebook/Endpoint/TrainingJob Enumeration [cmd/awtest/services/sagemaker/calls.go]
+
 ## Dev Notes
 
 ### CRITICAL: Session Region Pattern — Config Override, NOT Mutation
@@ -152,6 +156,7 @@ If SageMaker returns `AccessDeniedException` in a region, handle as a non-fatal 
      - `ModelName *string`
      - `ModelArn *string`
      - `CreationTime *time.Time`
+     - `LastModifiedTime *time.Time`
 
 4. **ListTrainingJobs:**
    - `svc.ListTrainingJobsWithContext(ctx, &sagemaker.ListTrainingJobsInput{MaxResults: aws.Int64(100), NextToken: nextToken})` -> `*sagemaker.ListTrainingJobsOutput`
