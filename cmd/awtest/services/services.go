@@ -36,6 +36,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ivsrealtime"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/kms"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/lambda"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/opensearch"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/organizations"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/rds"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/redshift"
@@ -95,6 +96,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ivsrealtime.IvsRealtimeCalls...)
 	allServices = append(allServices, kms.KMSCalls...)
 	allServices = append(allServices, lambda.LambdaCalls...)
+	allServices = append(allServices, opensearch.OpenSearchCalls...)
 	allServices = append(allServices, organizations.OrganizationsCalls...)
 	allServices = append(allServices, rds.RDSCalls...)
 	allServices = append(allServices, redshift.RedshiftCalls...)
