@@ -26,6 +26,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ecs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/efs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eks"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/emr"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticache"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/elasticbeanstalk"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/eventbridge"
@@ -38,6 +39,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ivs"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ivschat"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ivsrealtime"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/kinesis"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/kms"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/lambda"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/macie2"
@@ -92,6 +94,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ecs.ECSCalls...)
 	allServices = append(allServices, efs.EfsCalls...)
 	allServices = append(allServices, eks.EKSCalls...)
+	allServices = append(allServices, emr.EMRCalls...)
 	allServices = append(allServices, elasticache.ElastiCacheCalls...)
 	allServices = append(allServices, elasticbeanstalk.ElasticBeanstalkCalls...)
 	allServices = append(allServices, eventbridge.EventbridgeCalls...)
@@ -104,6 +107,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, ivs.IvsCalls...)
 	allServices = append(allServices, ivschat.IvsChatCalls...)
 	allServices = append(allServices, ivsrealtime.IvsRealtimeCalls...)
+	allServices = append(allServices, kinesis.KinesisCalls...)
 	allServices = append(allServices, kms.KMSCalls...)
 	allServices = append(allServices, lambda.LambdaCalls...)
 	allServices = append(allServices, macie2.Macie2Calls...)

@@ -129,8 +129,8 @@ development_status:
   epic-9: in-progress
   9-1-codedeploy-enumeration: done
   9-2-direct-connect-enumeration: done
-  9-3-emr-cluster-enumeration: backlog
-  9-4-kinesis-enumeration: backlog
+  9-3-emr-cluster-enumeration: review
+  9-4-kinesis-enumeration: done
   9-5-mediaconvert-enumeration: backlog
   9-6-neptune-enumeration: backlog
   epic-9-retrospective: optional
