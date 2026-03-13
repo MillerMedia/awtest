@@ -115,14 +115,14 @@ development_status:
   epic-7-retrospective: optional
 
   # Epic 8: High-Priority Service Expansion (Phase 2 Epic 3)
-  epic-8: in-progress
+  epic-8: done
   8-1-codebuild-enumeration: done
   8-2-codecommit-enumeration: done
   8-3-opensearch-enumeration: done
   8-4-sagemaker-enumeration: done
   8-5-aws-backup-enumeration: done
   8-6-athena-enumeration: done
-  8-7-macie-enumeration: review
+  8-7-macie-enumeration: done
   epic-8-retrospective: optional
 
   # Epic 9: Infrastructure & Data Service Expansion (Phase 2 Epic 4)
