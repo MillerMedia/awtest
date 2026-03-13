@@ -126,8 +126,8 @@ development_status:
   epic-8-retrospective: optional
 
   # Epic 9: Infrastructure & Data Service Expansion (Phase 2 Epic 4)
-  epic-9: backlog
-  9-1-codedeploy-enumeration: backlog
+  epic-9: in-progress
+  9-1-codedeploy-enumeration: done
   9-2-direct-connect-enumeration: backlog
   9-3-emr-cluster-enumeration: backlog
   9-4-kinesis-enumeration: backlog

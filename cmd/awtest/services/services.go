@@ -14,6 +14,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudwatch"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/codebuild"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/codecommit"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/codedeploy"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/codepipeline"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cognitoidentity"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cognitouserpools"
@@ -78,6 +79,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, cloudwatch.CloudwatchCalls...)
 	allServices = append(allServices, codebuild.CodeBuildCalls...)
 	allServices = append(allServices, codecommit.CodeCommitCalls...)
+	allServices = append(allServices, codedeploy.CodeDeployCalls...)
 	allServices = append(allServices, codepipeline.CodePipelineCalls...)
 	allServices = append(allServices, cognitoidentity.CognitoIdentityCalls...)
 	allServices = append(allServices, cognitouserpools.CognitoUserPoolsCalls...)
