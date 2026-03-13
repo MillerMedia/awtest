@@ -120,8 +120,8 @@ development_status:
   8-2-codecommit-enumeration: done
   8-3-opensearch-enumeration: done
   8-4-sagemaker-enumeration: done
-  8-5-aws-backup-enumeration: backlog
-  8-6-athena-enumeration: backlog
+  8-5-aws-backup-enumeration: done
+  8-6-athena-enumeration: done
   8-7-macie-enumeration: backlog
   epic-8-retrospective: optional
 

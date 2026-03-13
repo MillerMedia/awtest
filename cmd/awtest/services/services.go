@@ -4,6 +4,8 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/amplify"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/apigateway"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/appsync"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/athena"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/backup"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/batch"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/certificatemanager"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cloudformation"
@@ -65,6 +67,8 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, amplify.AmplifyCalls...)
 	allServices = append(allServices, apigateway.APIGatewayCalls...)
 	allServices = append(allServices, appsync.AppSyncCalls...)
+	allServices = append(allServices, athena.AthenaCalls...)
+	allServices = append(allServices, backup.BackupCalls...)
 	allServices = append(allServices, batch.BatchCalls...)
 	allServices = append(allServices, certificatemanager.CertificateManagerCalls...)
 	allServices = append(allServices, cloudformation.CloudFormationCalls...)
