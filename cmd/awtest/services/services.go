@@ -19,6 +19,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cognitoidentity"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/cognitouserpools"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/config"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/directconnect"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/dynamodb"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ec2"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/ecr"
@@ -84,6 +85,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, cognitoidentity.CognitoIdentityCalls...)
 	allServices = append(allServices, cognitouserpools.CognitoUserPoolsCalls...)
 	allServices = append(allServices, config.ConfigCalls...)
+	allServices = append(allServices, directconnect.DirectConnectCalls...)
 	allServices = append(allServices, dynamodb.DynamoDBCalls...)
 	allServices = append(allServices, ec2.EC2Calls...)
 	allServices = append(allServices, ecr.ECRCalls...)
