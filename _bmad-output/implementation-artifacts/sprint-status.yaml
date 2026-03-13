@@ -122,7 +122,7 @@ development_status:
   8-4-sagemaker-enumeration: done
   8-5-aws-backup-enumeration: done
   8-6-athena-enumeration: done
-  8-7-macie-enumeration: backlog
+  8-7-macie-enumeration: review
   epic-8-retrospective: optional
 
   # Epic 9: Infrastructure & Data Service Expansion (Phase 2 Epic 4)
