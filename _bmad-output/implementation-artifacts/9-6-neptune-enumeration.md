@@ -1,6 +1,6 @@
 # Story 9.6: Neptune Enumeration
 
-Status: review
+Status: done
 
 <!-- Generated: 2026-03-13 by BMAD Create Story Workflow -->
 <!-- Epic: 9 - Infrastructure & Data Service Expansion (Phase 2 Epic 4) -->

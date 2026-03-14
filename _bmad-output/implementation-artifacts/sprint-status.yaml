@@ -132,7 +132,7 @@ development_status:
   9-3-emr-cluster-enumeration: review
   9-4-kinesis-enumeration: done
   9-5-mediaconvert-enumeration: done
-  9-6-neptune-enumeration: review
+  9-6-neptune-enumeration: done
   epic-9-retrospective: optional
 
   # Epic 10: Documentation & Contributor Enablement (Phase 2 Epic 5)
