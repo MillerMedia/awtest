@@ -43,6 +43,7 @@ import (
 	"github.com/MillerMedia/awtest/cmd/awtest/services/kms"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/lambda"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/macie2"
+	"github.com/MillerMedia/awtest/cmd/awtest/services/mediaconvert"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/opensearch"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/organizations"
 	"github.com/MillerMedia/awtest/cmd/awtest/services/rds"
@@ -111,6 +112,7 @@ func AllServices() []types.AWSService {
 	allServices = append(allServices, kms.KMSCalls...)
 	allServices = append(allServices, lambda.LambdaCalls...)
 	allServices = append(allServices, macie2.Macie2Calls...)
+	allServices = append(allServices, mediaconvert.MediaConvertCalls...)
 	allServices = append(allServices, opensearch.OpenSearchCalls...)
 	allServices = append(allServices, organizations.OrganizationsCalls...)
 	allServices = append(allServices, rds.RDSCalls...)

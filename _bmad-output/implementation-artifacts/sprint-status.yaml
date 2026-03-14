@@ -131,7 +131,7 @@ development_status:
   9-2-direct-connect-enumeration: done
   9-3-emr-cluster-enumeration: review
   9-4-kinesis-enumeration: done
-  9-5-mediaconvert-enumeration: backlog
+  9-5-mediaconvert-enumeration: done
   9-6-neptune-enumeration: backlog
   epic-9-retrospective: optional
 
