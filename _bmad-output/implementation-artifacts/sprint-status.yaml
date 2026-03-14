@@ -136,8 +136,8 @@ development_status:
   epic-9-retrospective: optional
 
   # Epic 10: Documentation & Contributor Enablement (Phase 2 Epic 5)
-  epic-10: backlog
-  10-1-readme-update-63-services-speed-presets: backlog
-  10-2-contributing-md-concurrent-testing-requirements: backlog
+  epic-10: in-progress
+  10-1-readme-update-63-services-speed-presets: done
+  10-2-contributing-md-concurrent-testing-requirements: done
   10-3-service-template-concurrent-safe-update: backlog
   epic-10-retrospective: optional
