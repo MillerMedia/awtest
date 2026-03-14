@@ -37,5 +37,5 @@ jobs:
 
           # Push branch and tags to public repo
           git remote add public https://x-access-token:${GH_PAT}@github.com/MillerMedia/awtest.git
-          git push public HEAD:main --force
+          git push public HEAD:refs/heads/master --force
           git push public --tags --force
