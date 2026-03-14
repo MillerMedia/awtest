@@ -8,6 +8,12 @@
 // Here: "certificatemanager" (lowercase, no underscores)
 package certificatemanager
 
+// CONCURRENT SAFETY: This service is concurrency-unaware by design.
+// The worker pool (worker_pool.go) executes services concurrently at --speed=fast/insane.
+// The safeScan wrapper handles panic recovery and error classification automatically.
+// DO NOT import "sync", "sync/atomic", or spawn goroutines in this file.
+// DO NOT use global mutable state. Each Call() invocation must be self-contained.
+
 import (
 	"context"
 	"fmt"

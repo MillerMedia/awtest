@@ -2,6 +2,12 @@
 // Examples: certificatemanager, stepfunctions, elasticache
 package SERVICENAME
 
+// CONCURRENT SAFETY: This service is concurrency-unaware by design.
+// The worker pool (worker_pool.go) executes services concurrently at --speed=fast/insane.
+// The safeScan wrapper handles panic recovery and error classification automatically.
+// DO NOT import "sync", "sync/atomic", or spawn goroutines in this file.
+// DO NOT use global mutable state. Each Call() invocation must be self-contained.
+
 import (
 	"context"
 	"fmt"
@@ -28,6 +34,8 @@ var SERVICECalls = []types.AWSService{
 		// Format: "awsprefix:APIMethod" (e.g., "acm:ListCertificates", "sfn:ListStateMachines")
 		Name: "AWSPREFIX:APIMETHOD",
 
+		// Call is invoked via the safeScan wrapper which handles panic recovery and error classification.
+		// No concurrency-related code is needed here — just implement the AWS API call.
 		Call: func(ctx context.Context, sess *session.Session) (interface{}, error) {
 			// TODO: Replace RESULTTYPE with the SDK type for individual items in the response
 			// Examples: *acm.CertificateSummary, *sfn.StateMachineListItem
@@ -111,7 +119,7 @@ var SERVICECalls = []types.AWSService{
 				}
 			} else if output != nil {
 				// Type assertion failed -- Call() return type may not match Process() expectation
-				fmt.Printf("[WARNING] AWSPREFIX:APIMETHOD: unexpected output type %T\n", output)
+				utils.HandleAWSError(debug, "AWSPREFIX:APIMETHOD", fmt.Errorf("unexpected output type %T", output))
 			}
 			return results
 		},

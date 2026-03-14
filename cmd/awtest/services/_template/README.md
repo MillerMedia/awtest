@@ -79,13 +79,42 @@ This is required if your service imports a new AWS SDK package not already used 
 go build ./cmd/awtest
 ```
 
-### Step 9: Run tests
+### Step 9: Create tests
+
+Copy the test template and replace placeholders:
+
+```bash
+cp cmd/awtest/services/_template/calls_test.go.tmpl cmd/awtest/services/SERVICENAME/calls_test.go
+```
+
+Follow the table-driven test pattern in the template. At minimum, include test cases for:
+- Successful response with results
+- Error response
+- Empty results
+- Wrong type assertion
+
+See `calls_test.go.tmpl` for the full pattern, or refer to existing service tests (e.g., `sagemaker/calls_test.go`) for more detailed examples.
+
+### Step 10: Run tests
 
 ```bash
 make test
 ```
 
-Ensure all existing tests pass with no regressions.
+Ensure all existing tests pass with no regressions. Note that `make test` runs with the `-race` flag by default, which will catch any race conditions.
+
+## Concurrent Safety
+
+Services are automatically executed concurrently when using `--speed=fast` or `--speed=insane`. The worker pool and `safeScan` wrapper handle all parallelism and panic recovery transparently. **No concurrency-specific code is needed in your service.**
+
+**What NOT to do:**
+
+- Do not import `sync` or `sync/atomic`
+- Do not spawn goroutines
+- Do not use global mutable state
+- Do not write directly to stdout (use `utils.PrintResult()`)
+
+Each `Call()` invocation must be self-contained. The framework handles everything else.
 
 ## Reference Implementation
 
