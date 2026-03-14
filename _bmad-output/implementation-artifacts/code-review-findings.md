@@ -1,15 +1,16 @@
 **🔥 CODE REVIEW FINDINGS, Kn0ck0ut!**
 
-**Story:** 9.4 Kinesis Enumeration
-**Git vs Story Discrepancies:** 0 found
-**Issues Found:** 0 High, 1 Medium, 2 Low
+**Story:** 10-2-contributing-md-concurrent-testing-requirements
+**Git vs Story Discrepancies:** 2 found (README.md, sprint-status.yaml)
+**Issues Found:** 1 High, 2 Medium, 0 Low
 
 ## 🔴 CRITICAL ISSUES
-None.
+- **Dependency Mismatch**: `CONTRIBUTING.md` mandates using `testify` for tests (lines 116, 255), but `github.com/stretchr/testify` is **NOT** in `go.mod`. New contributors following the guide will face immediate compilation errors unless they know to manually install it. Furthermore, existing services (e.g., SageMaker) use the standard `testing` package, not `testify`, creating a split in testing standards.
 
 ## 🟡 MEDIUM ISSUES
-- **Error Suppression in Nested Loops:** In `ListShards` and `ListStreamConsumers`, `lastErr` is only updated in the first step (listing streams). If the second step (listing shards/consumers) fails for all streams, but the first step succeeded, the function returns `nil, nil` (empty results, no error), effectively swallowing the error. `lastErr` should be updated in the inner loops as well.
+- **Undocumented Changes**: `README.md` and `sprint-status.yaml` are modified in git but not listed in the story's File List. This appears to be leftover state from Story 10.1 or tracking updates.
+- **Inconsistent Reference**: The guide implies `calls_test.go` is a standard pattern ("Write table-driven tests in `calls_test.go`"), but core services like S3 do not have this file. While many newer services do, this inconsistency might confuse contributors looking at S3 for reference.
 
 ## 🟢 LOW ISSUES
-- **Inefficient Stream Listing:** `ListShards` and `ListStreamConsumers` both call `ListStreams` internally. When running a full scan, `ListStreams` is called 3 times total. This is an architectural trade-off for isolated service calls but worth noting.
-- **Test Error Precision:** Unit tests check for the existence of an error but do not validate the error message content matches the expected failure scenario.
+- None.
+

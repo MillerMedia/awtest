@@ -25,16 +25,17 @@
 
 ---
 
-AWTest quickly enumerates the permissions of AWS credentials by performing read-only list/describe operations across **46 AWS services** with **77 API calls**. Built for pentesters, red teamers, and cloud security assessors.
+AWTest quickly enumerates the permissions of AWS credentials by performing read-only list/describe operations across **63 AWS services** with **117 API calls**. Built for pentesters, red teamers, and cloud security assessors.
 
 ## Features
 
-- **Broad AWS Coverage** -- 46 services, 77 API calls covering S3, EC2, IAM, Lambda, EKS, RDS, DynamoDB, and more
+- **Broad AWS Coverage** -- 63 services, 117 API calls covering S3, EC2, IAM, Lambda, EKS, RDS, DynamoDB, GuardDuty, Security Hub, and more
+- **Speed Presets** -- `--speed` presets (`safe`, `fast`, `insane`) for OPSEC-aware scan parallelism
 - **Multiple Output Formats** -- Text, JSON, YAML, CSV, and table output
 - **File Export** -- Write results directly to a file with `--output-file`
 - **Service Filtering** -- Include or exclude specific services with `--services` and `--exclude-services`
 - **Configurable Timeouts** -- Set scan duration limits with `--timeout`
-- **Concurrent Scanning** -- Tune parallelism with `--concurrency`
+- **Concurrent Scanning** -- `--speed` presets or fine-grained `--concurrency` control
 - **Session Token Support** -- Works with temporary credentials (STS)
 - **Cross-Platform** -- Pre-built binaries for macOS, Linux, and Windows
 
@@ -104,6 +105,18 @@ awtest --services=s3,ec2,iam,lambda
 awtest --exclude-services=cloudwatch,cloudtrail
 ```
 
+### Fast scan with moderate parallelism
+
+```bash
+awtest --speed=fast
+```
+
+### Maximum speed with JSON output
+
+```bash
+awtest --speed=insane --format=json --output-file=results.json
+```
+
 ### Example Output
 
 ```
@@ -133,10 +146,33 @@ awtest --exclude-services=cloudwatch,cloudtrail
 | `--services` | Include only specific services (comma-separated) | all |
 | `--exclude-services` | Exclude specific services (comma-separated) | none |
 | `--timeout` | Maximum scan duration (e.g., `5m`, `300s`) | `5m` |
-| `--concurrency` | Number of concurrent service scans | `1` |
+| `--speed` | Speed preset: `safe`, `fast`, `insane` (controls scan parallelism) | `safe` |
+| `--concurrency` | Number of concurrent service scans (overrides speed preset when specified) | `1` |
 | `--quiet` | Suppress info messages, show only findings | `false` |
 | `--debug` | Enable debug output | `false` |
 | `--version` | Print version and build info | |
+
+## Speed Presets & OPSEC
+
+AWTest provides named speed presets that control scan parallelism. Choose the right preset based on your OPSEC requirements:
+
+| Preset | Concurrency | CloudTrail Profile | Use Case |
+|---|---|---|---|
+| `safe` | 1 worker | Minimal footprint -- sequential calls resemble normal console usage | Stealth engagements, red team ops, production infrastructure |
+| `fast` | 5 workers | Moderate density -- more events in a shorter window, within normal operational patterns | Time-sensitive pentests where speed matters more than stealth |
+| `insane` | 20 workers | Dense burst -- all 63 services hammered simultaneously, visible API call spike | Lab environments, time-critical bug bounty, OPSEC not a concern |
+
+**Default behavior:** Running `awtest` with no `--speed` flag defaults to `safe` (sequential scanning, identical to Phase 1 behavior).
+
+**Power-user override:** Use `--concurrency=N` to set an exact worker count, overriding the speed preset's mapping:
+
+```bash
+# Use fast preset (5 workers)
+awtest --speed=fast
+
+# Override: use fast preset label but with 10 workers
+awtest --speed=fast --concurrency=10
+```
 
 ## Output Formats
 
@@ -171,45 +207,47 @@ awtest --format=table
 During a fintech engagement, you discover AWS keys in a public GitHub repo. Run awtest to quickly enumerate what the credentials can access:
 
 ```bash
-awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --format=json --output-file=findings.json
+awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --speed=insane --format=json --output-file=findings.json
 ```
 
-In 90 seconds, awtest reveals an RDS instance with customer PII, S3 buckets with financial documents, and active Lambda functions -- a critical finding that would have taken hours to uncover manually.
+In seconds, awtest reveals an RDS instance with customer PII, S3 buckets with financial documents, and active Lambda functions -- a critical finding that would have taken hours to uncover manually.
 
 ### Bug Bounty
 
 You find hardcoded credentials in client-side JavaScript. Use awtest to demonstrate the full impact:
 
 ```bash
-awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --services=s3,secretsmanager,iam,lambda
+awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --speed=insane --services=s3,secretsmanager,iam,lambda
 ```
 
 AWTest reveals S3 buckets with user uploads and Secrets Manager entries, transforming a medium-severity credential exposure into a critical-severity finding with concrete evidence.
 
 ### Incident Response
 
-2 AM alert: credentials were committed to a public repo. Assess the blast radius before deciding whether to escalate:
+2 AM alert: credentials were committed to a public repo. Assess the blast radius before deciding whether to escalate -- use `--speed=safe` for a controlled scan with minimal CloudTrail footprint:
 
 ```bash
-awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --timeout=2m
+awtest --aki=AKIAEXAMPLE --sak=YourSecretKey --speed=safe --timeout=2m
 ```
 
 AWTest shows the credentials only have access to CloudWatch logs and one S3 log bucket -- no customer data exposed, no emergency escalation needed.
 
-## Supported AWS Services (46 services, 77 API calls)
+## Supported AWS Services (63 services, 117 API calls)
 
 <details>
-<summary>Click to expand full service list</summary>
+<summary>Click to expand full service list (63 services, 117 API calls)</summary>
 
 ### Compute & Containers
 
 | Service | API Calls |
 |---|---|
 | Batch | ListJobs |
-| EC2 | DescribeInstances, DescribeSecurityGroups, DescribeSubnets, DescribeVpcs |
-| ECS | ListClusters, ListFargateTasks |
+| EC2 | DescribeInstances |
+| ECS | ListClusters |
 | EKS | ListClusters |
 | Elastic Beanstalk | DescribeApplications, DescribeEvents |
+| EMR | ListClusters, ListInstanceGroups, ListSecurityConfigurations |
+| Fargate | ListFargateTasks |
 | Lambda | ListFunctions |
 
 ### Databases
@@ -218,6 +256,8 @@ AWTest shows the credentials only have access to CloudWatch logs and one S3 log 
 |---|---|
 | DynamoDB | ListTables, ListBackups, ListExports |
 | ElastiCache | DescribeCacheClusters |
+| Neptune | DescribeDBClusters, DescribeDBInstances, DescribeDBClusterParameterGroups |
+| OpenSearch | ListDomains, DescribeDomainAccessPolicies, DescribeDomainEncryption |
 | RDS | DescribeDBInstances |
 | Redshift | DescribeClusters |
 
@@ -228,9 +268,14 @@ AWTest shows the credentials only have access to CloudWatch logs and one S3 log 
 | Certificate Manager (ACM) | ListCertificates |
 | Cognito Identity | ListIdentityPools |
 | Cognito User Pools | ListUserPools |
-| IAM | ListUsers, ListAccessKeys, ListUserPolicies, ListAttachedUserPolicies, ListGroupsForUser |
+| ECR | DescribeRepositories, ListImages, GetRepositoryPolicy |
+| GuardDuty | ListDetectors, GetFindings, ListFilters |
+| IAM | ListUsers |
 | KMS | ListKeys |
+| Macie | ListClassificationJobs, ListFindings, DescribeBuckets |
+| Organizations | ListAccounts, ListOrganizationalUnits, ListPolicies |
 | Secrets Manager | ListSecrets |
+| Security Hub | GetEnabledStandards, GetFindings, ListEnabledProductsForImport |
 | STS | GetCallerIdentity |
 | WAF | ListWebACLs |
 
@@ -238,18 +283,20 @@ AWTest shows the credentials only have access to CloudWatch logs and one S3 log 
 
 | Service | API Calls |
 |---|---|
+| Backup | ListBackupVaults, ListBackupPlans, ListRecoveryPointsByBackupVault, GetBackupVaultAccessPolicy |
 | EFS | DescribeFileSystems |
 | Glacier | ListVaults |
-| S3 | ListBuckets, ListObjects |
+| S3 | ListBuckets |
 
 ### Networking
 
 | Service | API Calls |
 |---|---|
-| API Gateway | RestApis, GetApiKeys, GetDomainNames, GetModels, GetResources, GetStages |
-| CloudFront | ListDistributions, ListOrigins |
+| API Gateway | RestApis, GetApiKeys, GetDomainNames |
+| CloudFront | ListDistributions |
+| Direct Connect | DescribeConnections, DescribeVirtualInterfaces, DescribeDirectConnectGateways |
 | Route53 | ListHostedZones, ListHealthChecks |
-| VPC | DescribeVpcs, DescribeSubnets, DescribeSecurityGroups |
+| VPC | DescribeVpcs |
 
 ### Management & Monitoring
 
@@ -259,7 +306,7 @@ AWTest shows the credentials only have access to CloudWatch logs and one S3 log 
 | CloudTrail | DescribeTrails, ListTrails |
 | CloudWatch | DescribeAlarms |
 | CloudWatch Logs | DescribeLogGroupsAndStreams, ListMetrics |
-| Config | DescribeConfigRules, DescribeConfigurationRecorders |
+| Config | DescribeConfigurationRecorders |
 | Systems Manager (SSM) | DescribeParameters |
 
 ### Application Services
@@ -278,8 +325,18 @@ AWTest shows the credentials only have access to CloudWatch logs and one S3 log 
 |---|---|
 | Amplify | ListApps |
 | AppSync | ListGraphqlApis |
+| CodeBuild | ListProjects, ListProjectEnvironmentVariables, ListBuilds |
+| CodeCommit | ListRepositories, ListBranches |
+| CodeDeploy | ListApplications, ListDeploymentGroups, ListDeploymentConfigs |
 | CodePipeline | ListPipelines |
 | Glue | ListJobs, ListWorkflows |
+
+### Analytics
+
+| Service | API Calls |
+|---|---|
+| Athena | ListWorkGroups, ListNamedQueries, ListQueryExecutions |
+| Kinesis | ListStreams, ListShards, ListStreamConsumers |
 
 ### Media & ML
 
@@ -288,8 +345,10 @@ AWTest shows the credentials only have access to CloudWatch logs and one S3 log 
 | IVS | ListChannels, ListStreams, ListStreamKeys |
 | IVS Chat | ListRooms |
 | IVS Realtime | ListStages |
+| MediaConvert | ListQueues, ListJobs, ListPresets |
 | Rekognition | ListCollections, DescribeProjects, ListStreamProcessors |
-| Transcribe | ListTranscriptionJobs, ListLanguageModels, ListVocabularies |
+| SageMaker | ListNotebookInstances, ListEndpoints, ListModels, ListTrainingJobs |
+| Transcribe | ListTranscriptionJobs, ListLanguageModels, ListVocabularies, StartTranscriptionJob |
 
 ### IoT
 
