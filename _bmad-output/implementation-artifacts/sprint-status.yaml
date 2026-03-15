@@ -147,8 +147,8 @@ development_status:
   # ===========================
 
   # Epic 11: Version Update Check (Phase 3 Epic 1)
-  epic-11: in-progress
-  11-1-version-update-check-flag: review
+  epic-11: done
+  11-1-version-update-check-flag: done
   epic-11-retrospective: optional
 
   # Epic 12: macOS Code Signing & Notarization (Phase 3 Epic 2)

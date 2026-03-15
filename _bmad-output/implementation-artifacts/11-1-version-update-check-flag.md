@@ -1,6 +1,6 @@
 # Story 11.1: Version Update Check Flag
 
-Status: review
+Status: done
 
 ## Story
 
