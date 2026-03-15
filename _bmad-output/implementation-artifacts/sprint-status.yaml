@@ -1,4 +1,4 @@
-# generated: 2026-03-07
+# generated: 2026-03-14
 # project: awtest
 # project_key: NOKEY
 # tracking_system: file-system
@@ -33,7 +33,7 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-03-07
+generated: 2026-03-14
 project: awtest
 project_key: NOKEY
 tracking_system: file-system
@@ -141,3 +141,29 @@ development_status:
   10-2-contributing-md-concurrent-testing-requirements: done
   10-3-service-template-concurrent-safe-update: done
   epic-10-retrospective: optional
+
+  # ===========================
+  # PHASE 3 (Polish & Distribution)
+  # ===========================
+
+  # Epic 11: Version Update Check (Phase 3 Epic 1)
+  epic-11: in-progress
+  11-1-version-update-check-flag: review
+  epic-11-retrospective: optional
+
+  # Epic 12: macOS Code Signing & Notarization (Phase 3 Epic 2)
+  epic-12: backlog
+  12-1-apple-developer-certificate-setup-goreleaser-signing: backlog
+  12-2-apple-notarization-in-cicd: backlog
+  epic-12-retrospective: optional
+
+  # Epic 13: Public Distribution & Discoverability (Phase 3 Epic 3)
+  epic-13: backlog
+  13-1-readme-repository-optimization: backlog
+  13-2-security-tool-directory-submissions: backlog
+  13-3-homebrew-core-submission: backlog
+  epic-13-retrospective: optional
+
+  # Epic 14: Project Rename (Phase 3 Epic 4) — DEFERRED
+  epic-14: backlog
+  epic-14-retrospective: optional

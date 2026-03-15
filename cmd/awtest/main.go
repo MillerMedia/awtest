@@ -55,6 +55,7 @@ func main() {
 	speed := flag.String("speed", SpeedSafe, "Speed preset: safe, fast, insane")
 
 	version := flag.Bool("version", false, "Print version and build date")
+	checkUpdate := flag.Bool("check-update", false, "Check if a newer version is available")
 
 	flag.Parse()
 
@@ -68,6 +69,17 @@ func main() {
 
 	if *version {
 		fmt.Printf("awtest %s (built %s)\n", Version, BuildDate)
+		os.Exit(0)
+	}
+
+	if *checkUpdate {
+		msg, warn := checkForUpdate(Version)
+		if warn != "" {
+			fmt.Fprintln(os.Stderr, warn)
+		}
+		if msg != "" {
+			fmt.Print(msg)
+		}
 		os.Exit(0)
 	}
 
