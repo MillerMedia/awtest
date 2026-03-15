@@ -92,6 +92,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Start background update check (non-blocking, only for release builds)
+	updateCh := make(chan updateNotice, 1)
+	if !*quiet && Version != "dev" {
+		go func() {
+			msg, warn := checkForUpdate(Version)
+			updateCh <- updateNotice{msg, warn}
+		}()
+	}
+
 	if !*quiet {
 		fmt.Fprintln(os.Stderr, "     /\\ \\        / /__   __|      | |")
 		fmt.Fprintln(os.Stderr, "    /  \\ \\  /\\  / /   | | ___  ___| |_")
@@ -229,6 +238,7 @@ func main() {
 	// Unless quiet mode is set — then we need to use the formatter
 	if *outputFormat == "text" && *outputFile == "" && !*quiet {
 		printTextSummary(summary)
+		printUpdateNotice(updateCh)
 		return
 	}
 
@@ -253,6 +263,28 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Output written to %s\n", *outputFile)
 	} else {
 		fmt.Print(formatted)
+	}
+
+	if !*quiet {
+		printUpdateNotice(updateCh)
+	}
+}
+
+type updateNotice struct {
+	message string
+	warning string
+}
+
+// printUpdateNotice checks if a background update result is available and prints it.
+// Non-blocking: if the goroutine hasn't finished yet, it silently skips.
+func printUpdateNotice(ch chan updateNotice) {
+	select {
+	case result := <-ch:
+		if result.message != "" && !strings.Contains(result.message, "up to date") {
+			fmt.Fprintf(os.Stderr, "\n%s", result.message)
+		}
+	default:
+		// Update check still in progress — don't block
 	}
 }
 
