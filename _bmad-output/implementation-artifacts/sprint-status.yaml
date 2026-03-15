@@ -152,8 +152,8 @@ development_status:
   epic-11-retrospective: optional
 
   # Epic 12: macOS Code Signing & Notarization (Phase 3 Epic 2)
-  epic-12: backlog
-  12-1-apple-developer-certificate-setup-goreleaser-signing: backlog
+  epic-12: in-progress
+  12-1-apple-developer-certificate-setup-goreleaser-signing: review
   12-2-apple-notarization-in-cicd: backlog
   epic-12-retrospective: optional
 
